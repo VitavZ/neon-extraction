@@ -14,8 +14,6 @@ signal lost
 ## Surowce, które można przydzielić statkom (kolejność wyboru w Imperium).
 ## Złom i metal pochodzą tylko z miast, a statki trzymają się od miast z daleka.
 const RESOURCES := ["wood", "stone", "biomass", "water", "saltwater", "sand", "copper", "iron", "gold", "uranium", "neonite"]
-## Te surowce leżą tylko w złożach: bez Skanera planetarnego statki kopią wyłącznie odsłonięte złoża.
-const DEPOSIT_RESOURCES := ["copper", "iron", "gold", "uranium", "neonite"]
 
 var world: Node2D
 var ship: Node2D
@@ -174,20 +172,6 @@ func _deliver(m: Dictionary, res: String) -> void:
 	if fx:
 		fx.float_text(mothership.position + Vector2(0, -40), "+%d %s" % [n, GameState.RES_NAMES[res]], GameState.RES_COLORS[res])
 		fx.ring(mothership.position, Color(1.0, 0.8, 0.3, 0.7), 60.0, 0.35)
-
-
-## Stan statku do wyświetlenia w Imperium.
-func state_text(k: int) -> String:
-	if k >= miners.size():
-		return "W HANGARZE"
-	if miners[k]["dead"]:
-		return "ZNISZCZONY"
-	match miners[k]["state"]:
-		"mine": return "WYDOBYWA"
-		"fly": return "LECI DO ZŁOŻA"
-		"return": return "WRACA Z ŁADUNKIEM"
-		"idle": return "BRAK ZŁÓŻ W ZASIĘGU"
-	return "SZUKA ZŁÓŻ"
 
 
 func _draw() -> void:

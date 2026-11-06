@@ -563,7 +563,6 @@ static func display_pos(u: Dictionary) -> Vector2:
 
 static var _all: Array = []
 static var _ids: Dictionary = {}
-static var _positions: Dictionary = {}
 
 
 ## Spis budowany raz: te funkcje są wołane setki razy na klatkę przy rysowaniu siatki.
@@ -571,8 +570,6 @@ static func _index() -> void:
 	_all = LIST + ARMORY + LAB + EMPIRE
 	for u in _all:
 		_ids[u["id"]] = u
-	for u in LIST:
-		_positions[u["pos"]] = u
 
 
 static func all_items() -> Array:
@@ -585,9 +582,3 @@ static func by_id(id: String) -> Dictionary:
 	if _all.is_empty():
 		_index()
 	return _ids.get(id, {})
-
-
-static func by_pos(p: Vector2i) -> Dictionary:
-	if _all.is_empty():
-		_index()
-	return _positions.get(p, {})

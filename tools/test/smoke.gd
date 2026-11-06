@@ -29,6 +29,16 @@ func _shot(name: String) -> void:
 func _run() -> void:
 	var gs = root.get_node("GameState")
 	gs.slot = 4
+	change_scene_to_file("res://splash.tscn")
+	await _wait(1.2)
+	await _shot("00_splash")
+	# logika opcji (settings.cfg przywraca run_test.ps1)
+	var opt = load("res://scripts/options.gd")
+	var shake: bool = gs.settings["shake"]
+	opt.change("shake", 1, null, null)
+	var flipped: bool = gs.settings["shake"] != shake
+	opt.change("shake", 1, null, null)
+	_log("opcje: przełączanie %s, wartość głośności '%s'" % ["OK" if flipped and gs.settings["shake"] == shake else "BŁĄD", opt.value_text("volume")])
 	change_scene_to_file("res://menu.tscn")
 	await _wait(1.5)
 	await _shot("01_menu")
@@ -40,6 +50,12 @@ func _run() -> void:
 	menu._go("options", 0)
 	await _wait(0.6)
 	await _shot("02_menu_options")
+	menu._go("achievements", 0)
+	await _wait(0.6)
+	await _shot("02_menu_achievements")
+	menu._go("slots", 0)
+	await _wait(0.6)
+	await _shot("02_menu_slots")
 
 	gs.slot = 4
 	change_scene_to_file("res://main.tscn")

@@ -68,7 +68,7 @@ func _draw_grid_on(cv: CanvasItem) -> void:
 		var hov: bool = hovered.get("id", "") == id
 		var f: float = flash.get(id, 0.0) / 0.6
 		# węzeł wyskakuje pod kursorem i po zakupie
-		var hs := half * (1.0 + (0.1 * _ease(tip_t) if hov else 0.0) + 0.2 * f)
+		var hs := half * (1.0 + (0.1 * Style.ease_out(tip_t) if hov else 0.0) + 0.2 * f)
 		var plate := _octagon(p, hs)
 
 		var fill := Color(cat.r * 0.05, cat.g * 0.05, cat.b * 0.07, 0.98)
@@ -100,11 +100,11 @@ func _draw_grid_on(cv: CanvasItem) -> void:
 			fill = fill.lerp(Color(0.7, 0.7, 0.7), f * 0.5)
 
 		cv.draw_colored_polygon(plate, fill)
-		var outline := _closed(plate)
+		var outline := Style.closed(plate)
 		cv.draw_polyline(outline, Color(border.r, border.g, border.b, 0.25), (rim + 3.0) * w, true)
 		cv.draw_polyline(outline, border, rim * w, true)
 		if st == "max":
-			cv.draw_polyline(_closed(_octagon(p, hs - 4.0 * w)), Color(Style.GOLD.r, Style.GOLD.g, Style.GOLD.b, 0.4), 1.0, true)
+			cv.draw_polyline(Style.closed(_octagon(p, hs - 4.0 * w)), Color(Style.GOLD.r, Style.GOLD.g, Style.GOLD.b, 0.4), 1.0, true)
 
 		if id != "core":
 			# ikona na górze płytki, poziom pod nią
@@ -152,7 +152,7 @@ func _draw_grid_fx() -> void:
 		if st == "buy":
 			# stać cię: fala rozchodząca się od węzła
 			var wave := fmod(time * 0.7 + u["pos"].x * 0.3, 1.0)
-			cv.draw_polyline(_closed(_octagon(p, half + 2.0 + wave * 10.0 * z)), Color(C_LINE_ON.r, C_LINE_ON.g, C_LINE_ON.b, 0.32 * (1.0 - wave)), 1.0, true)
+			cv.draw_polyline(Style.closed(_octagon(p, half + 2.0 + wave * 10.0 * z)), Color(C_LINE_ON.r, C_LINE_ON.g, C_LINE_ON.b, 0.32 * (1.0 - wave)), 1.0, true)
 		elif st == "max":
 			# iskra krążąca po złotej ramie
 			var perim := half * 8.0 * 0.83
@@ -171,7 +171,7 @@ func _draw_grid_fx() -> void:
 				cv.draw_line(p + sd * half * (1.1 + g * 1.9), p + sd * half * (1.3 + g * 2.5), Color(1.0, 0.95, 0.8, f), 2.0)
 		if hovered.get("id", "") == id:
 			# celownik: narożniki oddychają wokół węzła
-			var hs := half * (1.0 + 0.1 * _ease(tip_t))
+			var hs := half * (1.0 + 0.1 * Style.ease_out(tip_t))
 			var hr := Rect2(p - Vector2(hs, hs), Vector2(hs, hs) * 2.0).grow((5.0 + 2.5 * sin(time * 7.0)) * z)
 			var arm := hr.size.x * 0.2
 			for corner in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
@@ -236,7 +236,7 @@ func _draw_tooltip(cv: CanvasItem, u: Dictionary) -> void:
 	if pos.x + w > vs.x - 8:
 		pos.x = mouse_pos.x - w - 22
 	pos.y = clampf(pos.y, 8, vs.y - h - 8)
-	pos.y += (1.0 - _ease(tip_t)) * 10.0
+	pos.y += (1.0 - Style.ease_out(tip_t)) * 10.0
 	var box := Rect2(pos, Vector2(w, h))
 	_hud_panel(cv, box, cat, Color(0.0, 0.0, 0.02, 0.97), 10.0)
 	var y := pos.y + 10
@@ -264,10 +264,10 @@ func _draw_grid() -> void:
 	Style.plus_badge(self, Vector2(lx + 6, ly - 5), 5.0, Style.PINK)
 	_text(Vector2(lx + 18, ly), "STAĆ CIĘ", 11, Style.TEXT_DIM)
 	lx += 100
-	draw_polyline(_closed(_octagon(Vector2(lx + 6, ly - 5), 6.5)), Upgrades.CAT_COLORS["defense"], 1.6, true)
+	draw_polyline(Style.closed(_octagon(Vector2(lx + 6, ly - 5), 6.5)), Upgrades.CAT_COLORS["defense"], 1.6, true)
 	_text(Vector2(lx + 18, ly), "KUPIONE", 11, Style.TEXT_DIM)
 	lx += 100
-	draw_polyline(_closed(_octagon(Vector2(lx + 6, ly - 5), 6.5)), Style.GOLD, 1.6, true)
+	draw_polyline(Style.closed(_octagon(Vector2(lx + 6, ly - 5), 6.5)), Style.GOLD, 1.6, true)
 	_text(Vector2(lx + 18, ly), "MAKS.", 11, Style.TEXT_DIM)
 	var hint := GameState.keys_text("PRZECIĄGNIJ: PRZESUŃ • KÓŁKO: ZOOM • {center}: WYŚRODKUJ")
 	var hw := font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x

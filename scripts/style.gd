@@ -66,10 +66,28 @@ static func panel(ci: CanvasItem, r: Rect2, c: Color, fill := PANEL) -> void:
 	ci.draw_rect(r.grow(-3), Color(c.r, c.g, c.b, 0.85), false, 1.0)
 
 
+## Wygładzenie "ease out" (szybki start, miękkie dojście), k obcinane do 0..1.
+static func ease_out(k: float) -> float:
+	var c := clampf(k, 0.0, 1.0)
+	return 1.0 - pow(1.0 - c, 3.0)
+
+
+## Wierzchołki prostokąta ze ściętym lewym górnym i prawym dolnym rogiem.
+static func chamfer_pts(r: Rect2, cut: float) -> PackedVector2Array:
+	return PackedVector2Array([r.position + Vector2(cut, 0), Vector2(r.end.x, r.position.y), Vector2(r.end.x, r.end.y - cut),
+		r.end - Vector2(cut, 0), Vector2(r.position.x, r.end.y), r.position + Vector2(0, cut)])
+
+
+## Kopia łamanej z dopisanym pierwszym punktem na końcu (do draw_polyline zamkniętych kształtów).
+static func closed(pts: PackedVector2Array) -> PackedVector2Array:
+	var out := pts.duplicate()
+	out.append(pts[0])
+	return out
+
+
 ## Panel ze ściętymi rogami (lewy górny i prawy dolny), jak na ekranie Statku Matki.
 static func chamfer_panel(ci: CanvasItem, r: Rect2, c: Color, fill := PANEL, cut := 10.0) -> void:
-	var pts := PackedVector2Array([r.position + Vector2(cut, 0), Vector2(r.end.x, r.position.y), Vector2(r.end.x, r.end.y - cut),
-		r.end - Vector2(cut, 0), Vector2(r.position.x, r.end.y), r.position + Vector2(0, cut)])
+	var pts := chamfer_pts(r, cut)
 	ci.draw_colored_polygon(pts, fill)
 	pts.append(pts[0])
 	ci.draw_polyline(pts, Color(c.r, c.g, c.b, 0.8), 1.4, true)

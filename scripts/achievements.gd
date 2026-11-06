@@ -166,12 +166,6 @@ static func _hex(c: Vector2, r: float, rot := 0.0) -> PackedVector2Array:
 	return p
 
 
-static func _closed(p: PackedVector2Array) -> PackedVector2Array:
-	var q := p.duplicate()
-	q.append(p[0])
-	return q
-
-
 ## Odznaka: neonowy sześciokąt z ikoną. Zablokowana jest szara, ukryta pokazuje znak zapytania.
 static func draw_badge(ci: CanvasItem, c: Vector2, r: float, id: String, got: bool, t: float) -> void:
 	var d := def(id)
@@ -183,9 +177,9 @@ static func draw_badge(ci: CanvasItem, c: Vector2, r: float, id: String, got: bo
 		for k in 12:
 			var a := t * 0.6 + k * TAU / 12.0
 			ci.draw_line(c + Vector2.from_angle(a) * (r + 5.0), c + Vector2.from_angle(a) * (r + 9.0), Color(col.r, col.g, col.b, 0.55), 1.5, true)
-		ci.draw_polyline(_closed(_hex(c, r + 3.0, PI / 6.0)), Color(col.r, col.g, col.b, 0.3), 3.0, true)
-	ci.draw_polyline(_closed(hex), col * Color(1.25, 1.25, 1.25, 1.0) if got else col, 2.0, true)
-	ci.draw_polyline(_closed(_hex(c, r * 0.8, PI / 6.0)), Color(col.r, col.g, col.b, 0.35), 1.0, true)
+		ci.draw_polyline(Style.closed(_hex(c, r + 3.0, PI / 6.0)), Color(col.r, col.g, col.b, 0.3), 3.0, true)
+	ci.draw_polyline(Style.closed(hex), col * Color(1.25, 1.25, 1.25, 1.0) if got else col, 2.0, true)
+	ci.draw_polyline(Style.closed(_hex(c, r * 0.8, PI / 6.0)), Color(col.r, col.g, col.b, 0.35), 1.0, true)
 	if not got and d.get("hidden", false):
 		var pf := Style.font_pixel()
 		var fs := int(r * 0.9)
@@ -214,7 +208,7 @@ static func _icon_launch(ci: CanvasItem, c: Vector2, s: float, col: Color, got: 
 	var pts := PackedVector2Array()
 	for p in shape:
 		pts.append(xf * (p * k))
-	ci.draw_polyline(_closed(pts), col, 1.8, true)
+	ci.draw_polyline(Style.closed(pts), col, 1.8, true)
 	var fl := (0.8 + 0.2 * sin(t * 18.0)) if got else 0.8
 	var base := xf * (Vector2(-12, 0) * k)
 	ci.draw_line(base, base + Vector2(0, s * 0.75 * fl), Color(1.3, 0.7, 0.3, col.a), 2.4, true)
@@ -237,7 +231,7 @@ static func _icon_crystals(ci: CanvasItem, c: Vector2, s: float, col: Color, got
 		var rt := base + Vector2(wd, -h * 0.75).rotated(rot)
 		var poly := PackedVector2Array([base, l, lt, tip, rt, rr])
 		ci.draw_colored_polygon(poly, Color(col.r * 0.25, col.g * 0.08, col.b * 0.25, 0.8 * col.a))
-		ci.draw_polyline(_closed(poly), col, 1.5, true)
+		ci.draw_polyline(Style.closed(poly), col, 1.5, true)
 		ci.draw_line(base, tip, Color(col.r, col.g, col.b, 0.5 * col.a), 1.0, true)
 	if got:
 		var tw := 0.5 + 0.5 * sin(t * 4.0)
@@ -275,7 +269,7 @@ static func _icon_shatter(ci: CanvasItem, c: Vector2, s: float, col: Color, got:
 	var cut := s * 0.25
 	var p := PackedVector2Array([r.position + Vector2(cut, 0), Vector2(r.end.x, r.position.y), Vector2(r.end.x, r.end.y - cut),
 		r.end - Vector2(cut, 0), Vector2(r.position.x, r.end.y), r.position + Vector2(0, cut)])
-	ci.draw_polyline(_closed(p), col, 1.6, true)
+	ci.draw_polyline(Style.closed(p), col, 1.6, true)
 	# pęknięcie przez środek
 	var crack := PackedVector2Array([c + Vector2(-0.2, -0.75) * s, c + Vector2(0.05, -0.25) * s, c + Vector2(-0.15, 0.05) * s,
 		c + Vector2(0.2, 0.35) * s, c + Vector2(0.05, 0.75) * s])

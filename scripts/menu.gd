@@ -19,11 +19,8 @@ const SHIP_SHAPE := [Vector2(22, 0), Vector2(4, -7), Vector2(-6, -18), Vector2(-
 	Vector2(-13, 0), Vector2(-9, 6), Vector2(-14, 16), Vector2(-6, 18), Vector2(4, 7)]
 const MAIN_ITEMS := ["START", "OSIĄGNIĘCIA", "OPCJE", "WYJŚCIE"]
 const VERSION := "Version 0.3.0"
-const OPT_ITEMS := ["resolution", "fullscreen", "vsync", "volume", "music", "sfx", "quality", "comfort", "crt", "glow", "shake", "controls", "back"]
-const OPT_NAMES := {
-	"resolution": "ROZDZIELCZOŚĆ", "fullscreen": "TRYB EKRANU", "vsync": "V-SYNC", "volume": "GŁOŚNOŚĆ OGÓLNA", "music": "MUZYKA", "sfx": "EFEKTY DŹWIĘKOWE",
-	"quality": "JAKOŚĆ OBRAZU", "comfort": "JASKRAWOŚĆ", "crt": "FILTR CRT", "glow": "POŚWIATA NEONÓW", "shake": "WSTRZĄSY EKRANU", "controls": "STEROWANIE", "back": "< WRÓĆ",
-}
+const Options = preload("res://scripts/options.gd")
+const OPT_ITEMS := Options.ITEMS
 
 var pf: Font
 var time := 0.0
@@ -258,12 +255,7 @@ func _click(action, button: int) -> void:
 			_activate(action)
 	elif action is String:
 		if action.begins_with("vol:"):
-			var parts: PackedStringArray = action.split(":")
-			if int(GameState.settings[parts[1]]) != int(parts[2]):
-				GameState.settings[parts[1]] = int(parts[2])
-				GameState.save_settings()
-				Audio.apply_volumes()
-				Audio.play("ui_hover", 0.0)
+			Options.set_volume_from(action)
 		elif action.begins_with("del"):
 			var n := int(action.substr(3))
 			if delete_armed == n:
@@ -326,59 +318,11 @@ func _leave(action: Callable) -> void:
 
 
 func _change_option(key: String, d: int) -> void:
-	var st := GameState.settings
-	match key:
-		"controls":
-			Audio.play("ui_click", 0.0)
-			_go("controls", 0)
-			return
-		"resolution":
-			st["resolution"] = posmod(int(st["resolution"]) + d, GameState.RESOLUTIONS.size())
-		"volume", "music", "sfx":
-			st[key] = clampi(int(st[key]) + d * 10, 0, 100)
-		"fullscreen", "vsync", "crt", "glow", "shake":
-			st[key] = not bool(st[key])
-		"quality":
-			st["quality"] = posmod(int(st.get("quality", 0)) + d, GameState.QUALITY_LEVELS.size())
-		"comfort":
-			st["comfort"] = posmod(int(st.get("comfort", 1)) + d, CrtScript.COMFORT_LEVELS.size())
-		_:
-			return
-	GameState.save_settings()
-	Audio.play("ui_click", 0.0)
-	if key in ["resolution", "fullscreen", "vsync"]:
-		GameState.apply_settings()
-	if key in ["volume", "music", "sfx"]:
-		Audio.apply_volumes()
-	if key == "crt":
-		crt.rect.visible = bool(st["crt"])
-	if key == "glow":
-		env.glow_enabled = bool(st["glow"])
-	if key == "comfort":
-		crt.apply_comfort()
-	if key == "quality":
-		GameState.apply_quality()
-
-
-func _value_text(key: String) -> String:
-	var st := GameState.settings
-	match key:
-		"resolution":
-			var r: Vector2i = GameState.RESOLUTIONS[int(st["resolution"])]
-			return "%d × %d" % [r.x, r.y]
-		"fullscreen":
-			return "PEŁNY EKRAN" if st["fullscreen"] else "OKNO"
-		"volume", "music", "sfx":
-			return "%d%%" % int(st[key])
-		"vsync", "crt", "glow", "shake":
-			return "WŁ." if st[key] else "WYŁ."
-		"controls":
-			return "PRZYPISZ"
-		"comfort":
-			return CrtScript.comfort_name()
-		"quality":
-			return GameState.quality_name()
-	return ""
+	if key == "controls":
+		Audio.play("ui_click", 0.0)
+		_go("controls", 0)
+		return
+	Options.change(key, d, crt, env)
 
 
 # =====================================================================
@@ -634,11 +578,6 @@ func _ctxt(cx: float, y: float, s: String, fsize: int, c: Color) -> void:
 	_txt(Vector2(cx - _tw(s, fsize) * 0.5, y), s, fsize, c)
 
 
-func _ease(k: float) -> float:
-	var c := clampf(k, 0.0, 1.0)
-	return 1.0 - pow(1.0 - c, 3.0)
-
-
 func _draw() -> void:
 	var vs := get_viewport_rect().size
 	hits.clear()
@@ -650,7 +589,7 @@ func _draw() -> void:
 	draw_polygon(PackedVector2Array([Vector2.ZERO, Vector2(vw, 0), Vector2(vw, vs.y), Vector2(0, vs.y)]),
 		PackedColorArray([dark, clear, clear, dark]))
 	# ekrany wjeżdżają z lewej
-	var slide := (1.0 - _ease(screen_t)) * -60.0
+	var slide := (1.0 - Style.ease_out(screen_t)) * -60.0
 	draw_set_transform(Vector2(slide, 0.0))
 	match screen:
 		"main": _draw_main(vs)
@@ -779,7 +718,7 @@ func _draw_shutters() -> void:
 	var closed := maxf(fade, clampf(leave_t, 0.0, 1.0) if leaving else 0.0)
 	if closed <= 0.0:
 		return
-	var half := vs.x * 0.5 * _ease(closed)
+	var half := vs.x * 0.5 * Style.ease_out(closed)
 	shutters.draw_rect(Rect2(0, 0, half, vs.y), Style.BG)
 	shutters.draw_rect(Rect2(vs.x - half, 0, half, vs.y), Style.BG)
 	shutters.draw_line(Vector2(half, 0), Vector2(half, vs.y), Color(1.3, 0.3, 1.1), 3.0)
@@ -915,7 +854,7 @@ func _logo_emblem() -> Vector2:
 func _logo_xform(vs: Vector2) -> Transform2D:
 	var s := 1.0 if screen == "main" else 0.4
 	var o := Vector2(LEFT_X + 24.0, 64.0) if screen == "main" else Vector2(vs.x * 0.5 - _logo_small_width() * 0.5 * s, 18.0)
-	o.x += (1.0 - _ease(screen_t)) * -60.0
+	o.x += (1.0 - Style.ease_out(screen_t)) * -60.0
 	return Transform2D(Vector2(s, 0.0), Vector2(-LOGO_SKEW * s, s), o)
 
 
@@ -1014,7 +953,7 @@ func _button(r: Rect2, text: String, fsize: int, idx, selected: bool, anim_key: 
 	hits.append([r, idx])
 	var k: float = btn_anim.get(anim_key, 0.0)
 	btn_anim[anim_key] = lerpf(k, 1.0 if selected else 0.0, 0.25)
-	var e := _ease(k)
+	var e := Style.ease_out(k)
 	var b := Rect2(r.position + Vector2(18.0 * e, 0), r.size)
 	var c: Color = col.lerp(Style.GOLD, e)
 	Style.chamfer_panel(self, b, c, Color(0.03 + 0.13 * e, 0.0 + 0.07 * e, 0.06 - 0.03 * e, 0.92), 10.0)
@@ -1054,7 +993,7 @@ func _draw_slots(vs: Vector2) -> void:
 		var selected := sel == i
 		var k: float = btn_anim.get("s%d" % i, 0.0)
 		btn_anim["s%d" % i] = lerpf(k, 1.0 if selected else 0.0, 0.25)
-		var e := _ease(k)
+		var e := Style.ease_out(k)
 		var base := Rect2(x0 + i * (cw + gap), y0, cw, ch)
 		hits.append([base, i])
 		var r := Rect2(base.position - Vector2(0, 12.0 * e), base.size)
@@ -1115,13 +1054,13 @@ func _draw_options(vs: Vector2) -> void:
 		var selected := sel == i
 		var k: float = btn_anim.get("o%d" % i, 0.0)
 		btn_anim["o%d" % i] = lerpf(k, 1.0 if selected else 0.0, 0.25)
-		var e := _ease(k)
+		var e := Style.ease_out(k)
 		var r := Rect2(x + 10.0 * e, y, w, 50)
 		hits.append([Rect2(x, y, w, 50), i])
 		var bc: Color = Color(Style.PINK.r, Style.PINK.g, Style.PINK.b, 0.6).lerp(Style.GOLD, e)
 		Style.chamfer_panel(self, r, bc, Color(0.03 + 0.08 * e, 0.0 + 0.05 * e, 0.06, 0.93), 8.0)
-		_txt(Vector2(r.position.x + 24, y + 34), OPT_NAMES[key], 24, Style.TEXT.lerp(Color(1.3, 1.0, 0.45), e))
-		var val := _value_text(key)
+		_txt(Vector2(r.position.x + 24, y + 34), Options.NAMES[key], 24, Style.TEXT.lerp(Color(1.3, 1.0, 0.45), e))
+		var val := Options.value_text(key)
 		var vx := x + w - 300
 		var lr := Rect2(vx, y + 5, 40, 40)
 		var rr := Rect2(x + w - 50, y + 5, 40, 40)
@@ -1139,7 +1078,7 @@ func _draw_options(vs: Vector2) -> void:
 			var v := int(GameState.settings[key]) / 10
 			for s in segs:
 				var sr := Rect2(bx + s * (bw / segs), y + 16, bw / segs - 3, 18)
-				hits.push_front([sr.grow(2.0), "vol:%s:%d" % [key, (s + 1) * 10]])
+				hits.push_front([sr.grow(2.0), Options.volume_action(key, (s + 1) * 10)])
 				draw_rect(sr, Style.CYAN if s < v else Color(0.2, 0.15, 0.25))
 			_txt(Vector2(bx + bw + 10, y + 34), val, 16, Style.TEXT)
 		else:
@@ -1180,7 +1119,7 @@ func _draw_controls(vs: Vector2) -> void:
 		var waiting: bool = rebinding == acts[i][0]
 		var k: float = btn_anim.get("c%d" % i, 0.0)
 		btn_anim["c%d" % i] = lerpf(k, 1.0 if selected or waiting else 0.0, 0.25)
-		var e := _ease(k)
+		var e := Style.ease_out(k)
 		var bc: Color = Color(Style.PINK.r, Style.PINK.g, Style.PINK.b, 0.6).lerp(Style.GOLD, e)
 		Style.chamfer_panel(self, r, bc, Color(0.03 + 0.08 * e, 0.0 + 0.05 * e, 0.06, 0.93), 8.0)
 		_txt(Vector2(r.position.x + 18, r.position.y + 30), String(acts[i][1]).to_upper(), 16, Style.TEXT.lerp(Color(1.3, 1.0, 0.45), e))

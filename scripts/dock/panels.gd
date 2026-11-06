@@ -36,7 +36,7 @@ func _draw_background(vs: Vector2) -> void:
 	draw_line(Vector2(0, horizon), Vector2(vs.x, horizon), Color(1.0, 0.3, 0.75, 0.35), 1.5)
 	# obszar siatki
 	var gr := _grid_area()
-	draw_colored_polygon(_chamfer(gr, 14.0), Color(0.01, 0.0, 0.025, 0.93))
+	draw_colored_polygon(Style.chamfer_pts(gr, 14.0), Color(0.01, 0.0, 0.025, 0.93))
 	_draw_hangar(gr)
 	var dot := 48.0
 	var gx := gr.position.x + fmod(view_offset.x, dot)
@@ -125,7 +125,7 @@ func _draw_top_button(r: Rect2, label: String, c: Color, on: bool) -> void:
 
 
 func _draw_top_bar(vs: Vector2) -> void:
-	var k := _ease((open_t - 0.3) / 0.6)
+	var k := Style.ease_out((open_t - 0.3) / 0.6)
 	draw_set_transform(Vector2(0.0, -(1.0 - k) * 100.0))
 	draw_rect(Rect2(0, 0, vs.x, 78), Color(0.02, 0.0, 0.05, 0.92))
 	_draw_emblem(self, Vector2(58, 40), 21.0)
@@ -153,7 +153,7 @@ func _draw_top_bar(vs: Vector2) -> void:
 
 
 func _draw_rail(vs: Vector2) -> void:
-	var k := _ease((open_t - 0.4) / 0.6)
+	var k := Style.ease_out((open_t - 0.4) / 0.6)
 	draw_set_transform(Vector2((1.0 - k) * 380.0, 0.0))
 	var x := vs.x - 340.0
 	# raport z ostatniego lotu
@@ -180,9 +180,9 @@ func _draw_rail(vs: Vector2) -> void:
 		for i in cur.size():
 			var ck: String = cur[i]
 			var cc: Color = GameState.RES_COLORS[ck]
-			var appear_c := _ease((open_t - 0.6 - i * 0.06) / 0.25)
+			var appear_c := Style.ease_out((open_t - 0.6 - i * 0.06) / 0.25)
 			var cr := Rect2(br.position.x + 16 + i * (cw + 8.0), br.position.y + 44 + (1.0 - appear_c) * 12.0, cw, 54)
-			var cp := _chamfer(cr, 8.0)
+			var cp := Style.chamfer_pts(cr, 8.0)
 			draw_colored_polygon(cp, Color(cc.r * 0.14, cc.g * 0.14, cc.b * 0.16, 0.95 * appear_c))
 			cp.append(cp[0])
 			draw_polyline(cp, Color(cc.r, cc.g, cc.b, 0.85 * appear_c), 1.6, true)
@@ -208,7 +208,7 @@ func _draw_rail(vs: Vector2) -> void:
 		any = true
 		var c: Color = GameState.RES_COLORS[r_key]
 		var shown: float = disp.get(r_key, float(n))
-		var appear := _ease((open_t - 0.65 - row * 0.025) / 0.25)
+		var appear := Style.ease_out((open_t - 0.65 - row * 0.025) / 0.25)
 		var ox := (1.0 - appear) * 26.0
 		var ca := Color(c.r, c.g, c.b, appear)
 		if row % 2 == 0:
@@ -268,7 +268,7 @@ func _draw_launch() -> void:
 func _draw_overlay(cv: CanvasItem) -> void:
 	if overlay_k <= 0.0 or overlay_shown == "":
 		return
-	var k := _ease(overlay_k)
+	var k := Style.ease_out(overlay_k)
 	var r := _overlay_rect(overlay_shown)
 	r.position.x -= (1.0 - k) * (r.size.x + 40.0)
 	if overlay_shown == "stats":
@@ -376,7 +376,7 @@ func _draw_quest(cv: CanvasItem, r: Rect2, q: Dictionary, idx: int) -> void:
 	r.position.x += (1.0 - a) * 20.0
 	var pulse := 0.5 + 0.5 * sin(time * 5.0)
 	var c: Color = Style.TEXT_DIM if done else (Style.GOLD if ready else Style.PINK)
-	var pts := _chamfer(r, 7.0)
+	var pts := Style.chamfer_pts(r, 7.0)
 	cv.draw_colored_polygon(pts, Color(0.08, 0.05, 0.0, 0.92 * a) if ready else Color(0.03, 0.0, 0.06, 0.9 * a))
 	var closed := pts.duplicate()
 	closed.append(pts[0])
@@ -389,7 +389,7 @@ func _draw_quest(cv: CanvasItem, r: Rect2, q: Dictionary, idx: int) -> void:
 		var br := Rect2(r.end.x - 132, r.position.y + 12, 120, 28)
 		claim_hits.append([br, q["id"]])
 		var hov := br.has_point(mouse_pos)
-		var bp := _chamfer(br, 6.0)
+		var bp := Style.chamfer_pts(br, 6.0)
 		cv.draw_colored_polygon(bp, Color(lc.r * 0.35, lc.g * 0.35, lc.b * 0.35, a) if hov else Color(lc.r * 0.15, lc.g * 0.15, lc.b * 0.18, a))
 		bp.append(bp[0])
 		cv.draw_polyline(bp, Color(lc.r, lc.g, lc.b, (0.7 + 0.3 * pulse) * a), 1.6, true)
@@ -470,14 +470,14 @@ func _draw_toast(cv: CanvasItem) -> void:
 		return
 	var tt: Dictionary = toasts[0]
 	var t: float = tt["t"]
-	var k := _ease(t / 0.3) * (1.0 - _ease((t - 3.2) / 0.3))
+	var k := Style.ease_out(t / 0.3) * (1.0 - Style.ease_out((t - 3.2) / 0.3))
 	var ga := _grid_area()
 	var line1: String = tt.get("line1", "+%d PL DO ODEBRANIA W ROZKAZACH" % int(tt.get("reward", 0)))
 	var line2: String = tt.get("line2", "%s - WYKONANO!" % String(tt.get("title", "")).to_upper())
 	var w := maxf(font_b.get_string_size(line2, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x, 300.0) + 60.0
 	var r := Rect2(ga.get_center().x - w * 0.5, ga.position.y + 56.0 - (1.0 - k) * 30.0, w, 62)
-	cv.draw_colored_polygon(_chamfer(r, 10.0), Color(0.05, 0.03, 0.0, 0.95 * k))
-	var pts := _chamfer(r, 10.0)
+	cv.draw_colored_polygon(Style.chamfer_pts(r, 10.0), Color(0.05, 0.03, 0.0, 0.95 * k))
+	var pts := Style.chamfer_pts(r, 10.0)
 	pts.append(pts[0])
 	cv.draw_polyline(pts, Color(Style.GOLD.r, Style.GOLD.g, Style.GOLD.b, k), 2.0, true)
 	var w1 := font_b.get_string_size(line1, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
@@ -493,7 +493,7 @@ func _draw_tab_wipe(cv: CanvasItem) -> void:
 	var ga := _grid_area()
 	var top := ga.position.y + 44.0
 	var h := ga.end.y - top - 2.0
-	var x := ga.position.x + 2.0 + (ga.size.x - 4.0) * _ease(tab_t)
+	var x := ga.position.x + 2.0 + (ga.size.x - 4.0) * Style.ease_out(tab_t)
 	cv.draw_rect(Rect2(x, top, ga.end.x - 2.0 - x, h), Color(0.01, 0.0, 0.025, 0.96))
 	cv.draw_line(Vector2(x, top), Vector2(x, top + h), Color(0.4, 1.1, 1.3, 1.0 - tab_t * 0.6), 3.0)
 	cv.draw_rect(Rect2(x - 26.0, top, 26.0, h), Color(0.3, 0.9, 1.0, 0.09 * (1.0 - tab_t)))
@@ -503,7 +503,7 @@ func _draw_tab_wipe(cv: CanvasItem) -> void:
 func _draw_iris(cv: CanvasItem, vs: Vector2) -> void:
 	if open_t >= OPEN_LEN:
 		return
-	var k := _ease((open_t - 0.28) / 0.6)
+	var k := Style.ease_out((open_t - 0.28) / 0.6)
 	var half := vs.x * 0.5 * (1.0 - k)
 	if half > 0.5:
 		cv.draw_rect(Rect2(0, 0, half, vs.y), Style.BG)

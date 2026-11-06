@@ -15,7 +15,6 @@ const SCALE := SIZE / 128.0
 const W := COLS * SIZE
 const H := ROWS * SIZE
 const GEO_H := H              # cała mapa jest geograficzna (stała zostaje dla narzędzia do wypiekania)
-const FEDERAL := 5
 
 const LON_MIN := -125.5
 const LON_MAX := -66.5

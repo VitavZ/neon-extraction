@@ -14,7 +14,7 @@ func _draw_empire() -> void:
 	var crown_c := head.position + Vector2(52, 46)
 	var oct := _octagon(crown_c, 30.0)
 	draw_colored_polygon(oct, Color(0.2, 0.13, 0.02))
-	draw_polyline(_closed(oct), gold, 2.0, true)
+	draw_polyline(Style.closed(oct), gold, 2.0, true)
 	Style.draw_icon(self, "crown", crown_c, 16.0, gold, 2.0)
 	draw_string(pf, head.position + Vector2(98, 46), "IMPERIUM VEX", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, gold)
 	_text(head.position + Vector2(100, 72), "Skarbiec zasług Kapitana. Dekrety Imperium wymagają Punktów Chwały i Lojalności.", 12, Color(0.85, 0.78, 0.6))
@@ -29,13 +29,13 @@ func _draw_empire() -> void:
 		var key: String = cards[i][0]
 		var c: Color = GameState.RES_COLORS[key]
 		var r := Rect2(head.position.x + i * (cw + 16), head.end.y + 16, cw, 150)
-		var appear := _ease((tab_t - 0.1 - i * 0.15) / 0.5)
+		var appear := Style.ease_out((tab_t - 0.1 - i * 0.15) / 0.5)
 		r.position.y += (1.0 - appear) * 16.0
 		_hud_panel(self, r, c, Color(c.r * 0.08, c.g * 0.08, c.b * 0.1, 0.94), 12.0)
 		var ic := r.position + Vector2(40, 52)
 		var o := _octagon(ic, 24.0)
 		draw_colored_polygon(o, Color(c.r * 0.18, c.g * 0.18, c.b * 0.2))
-		draw_polyline(_closed(o), c, 2.0, true)
+		draw_polyline(Style.closed(o), c, 2.0, true)
 		Style.draw_icon(self, GameState.CURRENCY_ICONS[key], ic, 13.0, c, 1.8)
 		draw_string(font_b, r.position + Vector2(78, 40), cards[i][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, c)
 		var n := str(int(GameState.bank.get(key, 0)))
@@ -53,7 +53,7 @@ func _draw_empire() -> void:
 		var owned := GameState.get_level(p[3]) > 0
 		var hov := pr.has_point(mouse_pos)
 		var pc: Color = gold if on else (Color(0.85, 0.75, 0.5) if hov else Color(0.6, 0.52, 0.4))
-		var pp := _chamfer(pr, 8.0)
+		var pp := Style.chamfer_pts(pr, 8.0)
 		draw_colored_polygon(pp, Color(0.16, 0.1, 0.02, 0.95) if on else Color(0.05, 0.03, 0.02, 0.92))
 		pp.append(pp[0])
 		draw_polyline(pp, pc, 1.8 if on else 1.2, true)
@@ -65,7 +65,7 @@ func _draw_empire() -> void:
 		px += 262
 	# miejsce na kolejne projekty
 	var soon := Rect2(px, dy, 200, 40)
-	var sp := _chamfer(soon, 8.0)
+	var sp := Style.chamfer_pts(soon, 8.0)
 	draw_colored_polygon(sp, Color(0.03, 0.02, 0.03, 0.8))
 	sp.append(sp[0])
 	draw_polyline(sp, Color(0.35, 0.3, 0.25), 1.0, true)
@@ -95,7 +95,7 @@ func _draw_project_unlock(card: Rect2, unlock: Dictionary) -> void:
 	var ic := card.position + Vector2(52, 60)
 	var o := _octagon(ic, 30.0)
 	draw_colored_polygon(o, Color(0.2, 0.13, 0.02))
-	draw_polyline(_closed(o), gold, 2.0, true)
+	draw_polyline(Style.closed(o), gold, 2.0, true)
 	Style.draw_icon(self, Style.icon_for(unlock["id"]), ic, 15.0, gold, 1.8)
 	draw_string(pf, card.position + Vector2(100, 50), String(unlock["name"]).to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 24, gold)
 	draw_multiline_string(font, card.position + Vector2(100, 76), GameState.keys_text(String(unlock["desc"])), HORIZONTAL_ALIGNMENT_LEFT, card.size.x - 420, 12, 3, Color(0.85, 0.78, 0.6))
@@ -103,7 +103,7 @@ func _draw_project_unlock(card: Rect2, unlock: Dictionary) -> void:
 	var can := GameState.can_buy(unlock)
 	var hov: bool = hovered.get("id", "") == unlock["id"]
 	var bc: Color = C_BUY if can else Color(0.55, 0.45, 0.6)
-	var bp := _chamfer(br.grow(2.0 if hov else 0.0), 10.0)
+	var bp := Style.chamfer_pts(br.grow(2.0 if hov else 0.0), 10.0)
 	draw_colored_polygon(bp, Color(0.04, 0.16, 0.08, 0.95) if can else Color(0.07, 0.03, 0.1, 0.95))
 	bp.append(bp[0])
 	draw_polyline(bp, bc, 2.0, true)
@@ -125,7 +125,7 @@ func _draw_miner_slots(head: Rect2, y: float) -> float:
 		var rc: Color = GameState.RES_COLORS[res]
 		var hov := on and (r.has_point(mouse_pos) or res_picker == k)
 		var bc: Color = (rc if hov else Color(gold.r, gold.g, gold.b, 0.8)) if on else Color(0.35, 0.3, 0.4)
-		var p := _chamfer(r, 9.0)
+		var p := Style.chamfer_pts(r, 9.0)
 		draw_colored_polygon(p, Color(rc.r * 0.08, rc.g * 0.08, rc.b * 0.1, 0.95) if on else Color(0.03, 0.02, 0.05, 0.9))
 		p.append(p[0])
 		draw_polyline(p, bc, 1.6 if on else 1.0, true)
@@ -157,7 +157,7 @@ func _draw_wing_slots(head: Rect2, y: float) -> float:
 	for k in 3:
 		var r := Rect2(head.position.x + k * (sw + 12.0), y, sw, 96)
 		var on := k < n
-		var p := _chamfer(r, 9.0)
+		var p := Style.chamfer_pts(r, 9.0)
 		draw_colored_polygon(p, Color(0.08, 0.05, 0.0, 0.95) if on else Color(0.03, 0.02, 0.05, 0.9))
 		p.append(p[0])
 		draw_polyline(p, Color(gold.r, gold.g, gold.b, 0.85) if on else Color(0.35, 0.3, 0.4), 1.6 if on else 1.0, true)
@@ -182,7 +182,7 @@ func _draw_transit_slots(head: Rect2, y: float) -> float:
 	for k in 3:
 		var r := Rect2(head.position.x + k * (sw + 12.0), y, sw, 96)
 		var on := k < n
-		var p := _chamfer(r, 9.0)
+		var p := Style.chamfer_pts(r, 9.0)
 		draw_colored_polygon(p, Color(0.08, 0.05, 0.0, 0.95) if on else Color(0.03, 0.02, 0.05, 0.9))
 		p.append(p[0])
 		draw_polyline(p, Color(gold.r, gold.g, gold.b, 0.85) if on else Color(0.35, 0.3, 0.4), 1.6 if on else 1.0, true)
@@ -234,10 +234,10 @@ func _draw_group_upgrades(head: Rect2, uy: float, group: String) -> void:
 			fill = fill.lerp(Color(0.6, 0.6, 0.6), f * 0.6)
 		if glory:
 			for g in 3:
-				var halo := _chamfer(rr.grow(3.0 + g * 3.0), 11.0 + g * 2.0)
+				var halo := Style.chamfer_pts(rr.grow(3.0 + g * 3.0), 11.0 + g * 2.0)
 				halo.append(halo[0])
 				draw_polyline(halo, Color(border.r, border.g, border.b, (0.28 - g * 0.08) * (0.6 + 0.4 * gp)), 2.0, true)
-		var plate := _chamfer(rr.grow(2.0 if hov else 0.0), 9.0)
+		var plate := Style.chamfer_pts(rr.grow(2.0 if hov else 0.0), 9.0)
 		draw_colored_polygon(plate, fill)
 		if glory:
 			# ukośne pasy w tle karty
@@ -253,7 +253,7 @@ func _draw_group_upgrades(head: Rect2, uy: float, group: String) -> void:
 			var tag := "ZA PUNKT CHWAŁY"
 			var tgw := font_b.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x + 32.0
 			var tg := Rect2(rr.get_center().x - tgw * 0.5, rr.end.y - 9.0, tgw, 18.0)
-			var tp := _chamfer(tg, 5.0)
+			var tp := Style.chamfer_pts(tg, 5.0)
 			draw_colored_polygon(tp, Color(0.16, 0.03, 0.12, 1.0))
 			tp.append(tp[0])
 			draw_polyline(tp, border, 1.4, true)
@@ -262,7 +262,7 @@ func _draw_group_upgrades(head: Rect2, uy: float, group: String) -> void:
 		var uc := rr.position + Vector2(26, 34)
 		var uo := _octagon(uc, 16.0)
 		draw_colored_polygon(uo, Color(border.r * 0.15, border.g * 0.15, border.b * 0.15))
-		draw_polyline(_closed(uo), border, 1.5, true)
+		draw_polyline(Style.closed(uo), border, 1.5, true)
 		Style.draw_icon(self, Style.icon_for(u["id"]), uc, 8.5, gold, 1.5)
 		var lx := rr.position.x + 52
 		var pw := 8.0
@@ -310,7 +310,7 @@ func _draw_res_picker(cv: CanvasItem) -> void:
 	var panel := Rect2(anchor.position.x, anchor.end.y + 6, cols * cw + 16, rows * rh + 46)
 	var vs := get_viewport_rect().size
 	panel.position.x = minf(panel.position.x, vs.x - 360.0 - panel.size.x)
-	var a := _ease(picker_t / 0.15)
+	var a := Style.ease_out(picker_t / 0.15)
 	panel.position.y += (1.0 - a) * -8.0
 	_hud_panel(cv, panel, Style.GOLD, Color(0.03, 0.02, 0.04, 0.98), 10.0)
 	cv.draw_string(font_b, panel.position + Vector2(12, 22), "SUROWIEC DLA STATKU %d" % (res_picker + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Style.GOLD)

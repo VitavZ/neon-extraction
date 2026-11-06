@@ -7,14 +7,10 @@ signal quit_requested
 signal return_requested
 
 const Style = preload("res://scripts/style.gd")
-const CrtScript = preload("res://scripts/crt.gd")
 const ITEMS_DOCKED := ["WZNÓW", "OSIĄGNIĘCIA", "OPCJE", "MENU GŁÓWNE"]
 const ITEMS_FLIGHT := ["WZNÓW", "POWRÓT NA STATEK MATKĘ", "OSIĄGNIĘCIA", "OPCJE", "MENU GŁÓWNE"]
-const OPT_ITEMS := ["resolution", "fullscreen", "vsync", "volume", "music", "sfx", "quality", "comfort", "crt", "glow", "shake", "controls", "back"]
-const OPT_NAMES := {
-	"resolution": "ROZDZIELCZOŚĆ", "fullscreen": "TRYB EKRANU", "vsync": "V-SYNC", "volume": "GŁOŚNOŚĆ OGÓLNA", "music": "MUZYKA", "sfx": "EFEKTY DŹWIĘKOWE",
-	"quality": "JAKOŚĆ OBRAZU", "comfort": "JASKRAWOŚĆ", "crt": "FILTR CRT", "glow": "POŚWIATA NEONÓW", "shake": "WSTRZĄSY EKRANU", "controls": "STEROWANIE", "back": "< WRÓĆ",
-}
+const Options = preload("res://scripts/options.gd")
+const OPT_ITEMS := Options.ITEMS
 
 var pf: Font
 var font: Font
@@ -142,64 +138,11 @@ func _activate(i: int) -> void:
 
 
 func _change_option(key: String, d: int) -> void:
-	var st := GameState.settings
-	match key:
-		"controls":
-			Audio.play("ui_click", 0.0)
-			_go("controls", 0)
-			return
-		"resolution":
-			st["resolution"] = posmod(int(st["resolution"]) + d, GameState.RESOLUTIONS.size())
-		"volume", "music", "sfx":
-			st[key] = clampi(int(st[key]) + d * 10, 0, 100)
-		"fullscreen", "vsync", "crt", "glow", "shake":
-			st[key] = not bool(st[key])
-		"quality":
-			st["quality"] = posmod(int(st.get("quality", 0)) + d, GameState.QUALITY_LEVELS.size())
-		"comfort":
-			st["comfort"] = posmod(int(st.get("comfort", 1)) + d, CrtScript.COMFORT_LEVELS.size())
-		_:
-			return
-	_apply(key)
-
-
-func _apply(key: String) -> void:
-	var st := GameState.settings
-	GameState.save_settings()
-	Audio.play("ui_click", 0.0)
-	if key in ["resolution", "fullscreen", "vsync"]:
-		GameState.apply_settings()
-	if key in ["volume", "music", "sfx"]:
-		Audio.apply_volumes()
-	if key == "crt" and crt:
-		crt.rect.visible = bool(st["crt"])
-	if key == "glow" and env:
-		env.glow_enabled = bool(st["glow"])
-	if key == "comfort" and crt:
-		crt.apply_comfort()
-	if key == "quality":
-		GameState.apply_quality()
-
-
-func _value_text(key: String) -> String:
-	var st := GameState.settings
-	match key:
-		"resolution":
-			var r: Vector2i = GameState.RESOLUTIONS[int(st["resolution"])]
-			return "%d × %d" % [r.x, r.y]
-		"fullscreen":
-			return "PEŁNY EKRAN" if st["fullscreen"] else "OKNO"
-		"volume", "music", "sfx":
-			return "%d%%" % int(st[key])
-		"vsync", "crt", "glow", "shake":
-			return "WŁ." if st[key] else "WYŁ."
-		"controls":
-			return "PRZYPISZ"
-		"comfort":
-			return CrtScript.comfort_name()
-		"quality":
-			return GameState.quality_name()
-	return ""
+	if key == "controls":
+		Audio.play("ui_click", 0.0)
+		_go("controls", 0)
+		return
+	Options.change(key, d, crt, env)
 
 
 func _click(action, button: int) -> void:
@@ -213,12 +156,7 @@ func _click(action, button: int) -> void:
 		return
 	var a: String = action
 	if a.begins_with("vol:"):
-		var parts: PackedStringArray = a.split(":")
-		if int(GameState.settings[parts[1]]) != int(parts[2]):
-			GameState.settings[parts[1]] = int(parts[2])
-			GameState.save_settings()
-			Audio.apply_volumes()
-			Audio.play("ui_hover", 0.0)
+		Options.set_volume_from(a)
 	elif a.begins_with("opt-"):
 		_change_option(a.substr(4), -1)
 	elif a.begins_with("opt+"):
@@ -349,7 +287,7 @@ func _draw_options(vs: Vector2, e: float) -> void:
 		var bc: Color = Style.GOLD if on else Color(Style.PINK.r, Style.PINK.g, Style.PINK.b, 0.6)
 		Style.chamfer_panel(self, rr, bc, Color(0.11, 0.05, 0.06, 0.93) if on else Color(0.03, 0.0, 0.06, 0.93), 7.0)
 		var ty := y + 27
-		draw_string(pf, Vector2(rr.position.x + 18, ty), OPT_NAMES[key], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1.3, 1.0, 0.45) if on else Style.TEXT)
+		draw_string(pf, Vector2(rr.position.x + 18, ty), Options.NAMES[key], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1.3, 1.0, 0.45) if on else Style.TEXT)
 		var lr := Rect2(x + rw - 270, y + 3, 34, 34)
 		var ar := Rect2(x + rw - 40, y + 3, 34, 34)
 		hits.push_front([lr, "opt-" + key])
@@ -358,7 +296,7 @@ func _draw_options(vs: Vector2, e: float) -> void:
 		draw_string(pf, Vector2(lr.position.x + 10, ty), "<", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, ac)
 		draw_string(pf, Vector2(ar.position.x + 12, ty), ">", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, ac)
 		var mid := (lr.end.x + ar.position.x) * 0.5
-		var val := _value_text(key)
+		var val := Options.value_text(key)
 		if key in ["volume", "music", "sfx"]:
 			# suwak: kliknij lub przeciągnij po kreskach
 			var bw := 130.0
@@ -366,7 +304,7 @@ func _draw_options(vs: Vector2, e: float) -> void:
 			var v := int(GameState.settings[key]) / 10
 			for s in 10:
 				var sr := Rect2(bx + s * (bw / 10.0), y + 12, bw / 10.0 - 3, 16)
-				hits.push_front([sr.grow(2.0), "vol:%s:%d" % [key, (s + 1) * 10]])
+				hits.push_front([sr.grow(2.0), Options.volume_action(key, (s + 1) * 10)])
 				draw_rect(sr, Style.CYAN if s < v else Color(0.2, 0.15, 0.25))
 			draw_string(font, Vector2(bx + bw + 8, ty - 2), val, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Style.TEXT)
 		else:

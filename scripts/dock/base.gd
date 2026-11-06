@@ -210,12 +210,6 @@ func _octagon(c: Vector2, half: float) -> PackedVector2Array:
 		c + Vector2(a, half), c + Vector2(-a, half), c + Vector2(-half, a), c + Vector2(-half, -a)])
 
 
-func _closed(pts: PackedVector2Array) -> PackedVector2Array:
-	var out := pts.duplicate()
-	out.append(pts[0])
-	return out
-
-
 ## Poziom ulepszenia: rząd kresek, a przy dużej liczbie poziomów liczba.
 func _draw_pips(cv: CanvasItem, c: Vector2, half: float, lv: int, mx: int, col: Color, z: float) -> void:
 	if mx > 8:
@@ -309,19 +303,9 @@ func _text_on(cv: CanvasItem, p: Vector2, txt: String, fsize: int, c: Color) -> 
 
 ## Płytka ze ściętymi rogami, bez krążącego światła (na karty, których jest dużo).
 func _plate(r: Rect2, fill: Color, border: Color, w := 1.2) -> void:
-	var pts := _chamfer(r, 8.0)
+	var pts := Style.chamfer_pts(r, 8.0)
 	draw_colored_polygon(pts, fill)
-	draw_polyline(_closed(pts), border, w, true)
-
-
-func _ease(k: float) -> float:
-	var c := clampf(k, 0.0, 1.0)
-	return 1.0 - pow(1.0 - c, 3.0)
-
-
-func _chamfer(r: Rect2, cut: float) -> PackedVector2Array:
-	return PackedVector2Array([r.position + Vector2(cut, 0), Vector2(r.end.x, r.position.y), Vector2(r.end.x, r.end.y - cut),
-		r.end - Vector2(cut, 0), Vector2(r.position.x, r.end.y), r.position + Vector2(0, cut)])
+	draw_polyline(Style.closed(pts), border, w, true)
 
 
 ## Punkt na zamkniętej łamanej w odległości d od początku.
@@ -338,7 +322,7 @@ func _along(pts: PackedVector2Array, d: float) -> Vector2:
 
 ## Panel ze ściętymi rogami, po którego ramce krąży światło.
 func _hud_panel(cv: CanvasItem, r: Rect2, c: Color, fill := Style.PANEL, cut := 12.0) -> void:
-	var pts := _chamfer(r, cut)
+	var pts := Style.chamfer_pts(r, cut)
 	cv.draw_colored_polygon(pts, fill)
 	var closed := pts.duplicate()
 	closed.append(pts[0])

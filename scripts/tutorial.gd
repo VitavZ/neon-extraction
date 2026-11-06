@@ -384,17 +384,6 @@ func _draw_shards() -> void:
 
 # ---------------- rysowanie ----------------
 
-func _chamfer(r: Rect2, cut: float) -> PackedVector2Array:
-	return PackedVector2Array([r.position + Vector2(cut, 0), Vector2(r.end.x, r.position.y), Vector2(r.end.x, r.end.y - cut),
-		r.end - Vector2(cut, 0), Vector2(r.position.x, r.end.y), r.position + Vector2(0, cut)])
-
-
-func _closed(p: PackedVector2Array) -> PackedVector2Array:
-	var q := p.duplicate()
-	q.append(p[0])
-	return q
-
-
 func _draw() -> void:
 	if showing:
 		_draw_popup()
@@ -437,10 +426,10 @@ func _draw_popup() -> void:
 	var pink := Style.PINK
 	# poświata
 	for g in 4:
-		var halo := _chamfer(r.grow(4.0 + g * 4.0), 16.0 + g * 3.0)
-		draw_polyline(_closed(halo), Color(pink.r, pink.g, pink.b, (0.22 - g * 0.05) * (0.7 + 0.3 * pulse) * flick), 3.0, true)
+		var halo := Style.chamfer_pts(r.grow(4.0 + g * 4.0), 16.0 + g * 3.0)
+		draw_polyline(Style.closed(halo), Color(pink.r, pink.g, pink.b, (0.22 - g * 0.05) * (0.7 + 0.3 * pulse) * flick), 3.0, true)
 	# przy otwieraniu panel bywa niski - ścięcie rogów nie może być większe niż on sam
-	var plate := _chamfer(r, minf(16.0, r.size.y * 0.3))
+	var plate := Style.chamfer_pts(r, minf(16.0, r.size.y * 0.3))
 	draw_colored_polygon(plate, Color(0.05, 0.01, 0.08, 0.97))
 	# delikatne linie skanowania i przesuwający się pas światła
 	var y := r.position.y + 2.0
@@ -449,8 +438,8 @@ func _draw_popup() -> void:
 		y += 4.0
 	var sweep := r.position.y + fmod(time * 0.35, 1.0) * r.size.y
 	draw_rect(Rect2(r.position.x + 2, sweep, r.size.x - 4, 14), Color(1.0, 0.5, 0.9, 0.04))
-	draw_polyline(_closed(plate), Color(pink.r * 1.2, pink.g * 1.2, pink.b * 1.2, flick), 2.4, true)
-	draw_polyline(_closed(_chamfer(r.grow(-6), 12.0)), Color(gold.r, gold.g, gold.b, 0.35 * flick), 1.0, true)
+	draw_polyline(Style.closed(plate), Color(pink.r * 1.2, pink.g * 1.2, pink.b * 1.2, flick), 2.4, true)
+	draw_polyline(Style.closed(Style.chamfer_pts(r.grow(-6), 12.0)), Color(gold.r, gold.g, gold.b, 0.35 * flick), 1.0, true)
 	# narożne klamry
 	var bl := 22.0
 	for corner in [[Vector2(r.end.x + 5, r.position.y - 5), Vector2(-1, 0), Vector2(0, 1)],
@@ -470,7 +459,7 @@ func _draw_popup() -> void:
 	for t in 10:
 		var a := time * 0.8 + t * TAU / 10.0
 		draw_line(ic + Vector2.from_angle(a) * 34.0, ic + Vector2.from_angle(a) * 38.0, Color(gold.r, gold.g, gold.b, 0.6), 1.5, true)
-	draw_polyline(_closed(hex), Color(gold.r * 1.25, gold.g * 1.25, gold.b * 1.25), 2.2, true)
+	draw_polyline(Style.closed(hex), Color(gold.r * 1.25, gold.g * 1.25, gold.b * 1.25), 2.2, true)
 	Style.draw_icon(self, st[3], ic, 14.0, Color(1.3, 1.05, 0.5), 2.0)
 	var tx := r.position.x + 98
 	draw_string(font_b, Vector2(tx, r.position.y + 30), "SAMOUCZEK  %d / %d" % [step + 1, STEPS.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(pink.r, pink.g, pink.b, 0.95))
@@ -481,9 +470,9 @@ func _draw_popup() -> void:
 			draw_colored_polygon(dq, Color(gold.r, gold.g, gold.b, 0.7))
 		elif i == step:
 			draw_colored_polygon(dq, Color(1.3, 1.1, 0.6))
-			draw_polyline(_closed(PackedVector2Array([dp + Vector2(0, -7), dp + Vector2(7, 0), dp + Vector2(0, 7), dp + Vector2(-7, 0)])), Color(gold.r, gold.g, gold.b, 0.4 + 0.6 * pulse), 1.2, true)
+			draw_polyline(Style.closed(PackedVector2Array([dp + Vector2(0, -7), dp + Vector2(7, 0), dp + Vector2(0, 7), dp + Vector2(-7, 0)])), Color(gold.r, gold.g, gold.b, 0.4 + 0.6 * pulse), 1.2, true)
 		else:
-			draw_polyline(_closed(dq), Color(0.5, 0.42, 0.6), 1.0, true)
+			draw_polyline(Style.closed(dq), Color(0.5, 0.42, 0.6), 1.0, true)
 	var title: String = st[0]
 	var tfs := 28
 	while tfs > 16 and pf.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, tfs).x > r.end.x - tx - 20:
@@ -509,9 +498,9 @@ func _draw_popup() -> void:
 				# klawisz: pogrubiony napis w złotej ramce, pojawia się w całości
 				var kw := _key_w(txt)
 				var kr := Rect2(sx, ty - 16, kw, 22)
-				var kp := _chamfer(kr, 4.0)
+				var kp := Style.chamfer_pts(kr, 4.0)
 				draw_colored_polygon(kp, Color(0.22, 0.14, 0.03))
-				draw_polyline(_closed(kp), Color(gold.r * 1.2, gold.g * 1.2, gold.b * 1.2), 1.6, true)
+				draw_polyline(Style.closed(kp), Color(gold.r * 1.2, gold.g * 1.2, gold.b * 1.2), 1.6, true)
 				draw_line(Vector2(kr.position.x + 4, kr.end.y + 1), Vector2(kr.end.x - 1, kr.end.y + 1), Color(gold.r, gold.g, gold.b, 0.45), 2.0)
 				var tw := font_b.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, KEY_FS).x
 				draw_string(font_b, Vector2(kr.get_center().x - tw * 0.5, ty), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, KEY_FS, Color(1.35, 1.15, 0.6))
@@ -530,9 +519,9 @@ func _draw_popup() -> void:
 	var hov_ok := hover == "ok"
 	var ok_c := gold if not _typing() else Color(0.6, 0.55, 0.7)
 	var obr := ok_rect.grow(2.0 if hov_ok else 0.0)
-	var okp := _chamfer(obr, 8.0)
+	var okp := Style.chamfer_pts(obr, 8.0)
 	draw_colored_polygon(okp, Color(0.32, 0.22, 0.04) if hov_ok or press_t > 0.0 else Color(0.14, 0.09, 0.02))
-	draw_polyline(_closed(okp), Color(ok_c.r * 1.2, ok_c.g * 1.2, ok_c.b * 1.2) if hov_ok else ok_c, 2.0, true)
+	draw_polyline(Style.closed(okp), Color(ok_c.r * 1.2, ok_c.g * 1.2, ok_c.b * 1.2) if hov_ok else ok_c, 2.0, true)
 	if not _typing():
 		# biegnące szewrony zachęcają do kliknięcia
 		for j in 2:

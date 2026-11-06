@@ -74,11 +74,6 @@ func _skip() -> void:
 		cue["dock"] = true
 
 
-func _ease(k: float) -> float:
-	var c := clampf(k, 0.0, 1.0)
-	return 1.0 - pow(1.0 - c, 3.0)
-
-
 func _draw() -> void:
 	var vs := get_viewport_rect().size
 	var c := vs * 0.5 + Vector2(0, -40)
@@ -86,14 +81,14 @@ func _draw() -> void:
 	# włączanie: jasna linia, która rozwiera się w obraz
 	if t < POWER_ON:
 		var k := t / POWER_ON
-		var w := vs.x * _ease(k * 1.6)
+		var w := vs.x * Style.ease_out(k * 1.6)
 		var h := maxf(2.0, vs.y * pow(maxf(0.0, k - 0.55) / 0.45, 2.0))
 		draw_rect(Rect2(c.x - w * 0.5, vs.y * 0.5 - h * 0.5, w, h), Color(0.6, 0.9, 1.3, 1.0 - maxf(0.0, k - 0.55) * 1.6))
 		return
 	# gaśnięcie: obraz zgniata się do linii, a linia do punktu
 	var off := clampf((t - HOLD_END) / OFF_LEN, 0.0, 1.0)
-	var sy := 1.0 - _ease(off / 0.6)
-	var sx := 1.0 - _ease((off - 0.6) / 0.4)
+	var sy := 1.0 - Style.ease_out(off / 0.6)
+	var sx := 1.0 - Style.ease_out((off - 0.6) / 0.4)
 	draw_set_transform(vs * 0.5 * (Vector2.ONE - Vector2(maxf(sx, 0.002), maxf(sy, 0.004))), 0.0, Vector2(maxf(sx, 0.002), maxf(sy, 0.004)))
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.03, 0.0, 0.06))
 	_draw_rays(c)
@@ -146,7 +141,7 @@ func _draw_emblem(c: Vector2) -> void:
 		var a := rot + k / 4.0 * TAU + PI / 8.0
 		var d := Vector2.from_angle(a)
 		var n := d.orthogonal()
-		var len := 72.0 + 90.0 * _ease(k2)
+		var len := 72.0 + 90.0 * Style.ease_out(k2)
 		if k2 <= 0.0:
 			continue
 		var arm := PackedVector2Array([c + d * 50.0 + n * 14.0, c + d * (len - 12.0) + n * 6.0, c + d * len, c + d * (len - 12.0) - n * 6.0, c + d * 50.0 - n * 14.0])
@@ -187,6 +182,6 @@ func _draw_text(vs: Vector2, c: Vector2) -> void:
 	var k2 := clampf((t - TEXT_END + 0.3) / 0.6, 0.0, 1.0)
 	if k2 > 0.0:
 		var w2 := pf.get_string_size(PRESENTS, HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x
-		var line_w := full_w * _ease(k2)
+		var line_w := full_w * Style.ease_out(k2)
 		draw_line(Vector2(c.x - line_w * 0.5, p.y + 20), Vector2(c.x + line_w * 0.5, p.y + 20), Color(1.0, 0.3, 0.8, 0.7 * k2), 2.0)
 		draw_string(pf, Vector2(c.x - w2 * 0.5, p.y + 58).round(), PRESENTS, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color(0.3, 0.95, 1.2, k2))

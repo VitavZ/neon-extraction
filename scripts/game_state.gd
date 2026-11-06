@@ -12,7 +12,6 @@ const Quests = preload("res://scripts/quests.gd")
 
 const Sectors = preload("res://scripts/sectors.gd")
 
-const TILE := 48
 ## Koszt przeniesienia Statku Matki o jeden sektor (mnożony przez liczbę kroków).
 const MOVE_COST := {"metal": 220, "electronics": 45, "gold": 14, "uranium": 6}
 const OLD_SAVE_PATH := "user://neon_extraction_save.json"   # zapis sprzed slotów
@@ -885,9 +884,3 @@ func load_game() -> bool:
 	refresh_quests()
 	recalc_stats()
 	return true
-
-
-func delete_save() -> void:
-	if FileAccess.file_exists(save_path()):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path()))
-	new_game()

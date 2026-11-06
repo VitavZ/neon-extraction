@@ -51,7 +51,7 @@ func _draw_armory() -> void:
 					ups.append(u)
 		var owned := GameState.get_level(unlock["id"]) > 0
 		var cc: Color = wc if owned else Color(0.45, 0.38, 0.55)
-		draw_colored_polygon(_chamfer(card, 14.0), Color(cc.r * 0.04, cc.g * 0.04, cc.b * 0.06 + 0.03, 0.96))
+		draw_colored_polygon(Style.chamfer_pts(card, 14.0), Color(cc.r * 0.04, cc.g * 0.04, cc.b * 0.06 + 0.03, 0.96))
 		_hud_panel(self, card, cc, Color(0, 0, 0, 0), 14.0)
 
 		# nagłówek: ikona w ośmiokącie, nazwa, stan
@@ -61,7 +61,7 @@ func _draw_armory() -> void:
 		var ic := head.position + Vector2(34, 32)
 		var oct := _octagon(ic, 24.0)
 		draw_colored_polygon(oct, Color(cc.r * 0.15, cc.g * 0.15, cc.b * 0.18, 1.0))
-		draw_polyline(_closed(oct), cc, 2.0, true)
+		draw_polyline(Style.closed(oct), cc, 2.0, true)
 		Style.draw_icon(self, Style.icon_for(key), ic, 13.0, cc, 1.8)
 		draw_string(pf, head.position + Vector2(70, 34), String(w["name"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 24, cc if owned else Color(0.75, 0.7, 0.85))
 		var state_txt := "AKTYWNE" if owned else "ZABLOKOWANE"
@@ -77,7 +77,7 @@ func _draw_armory() -> void:
 			var hov: bool = hovered.get("id", "") == unlock["id"]
 			var pulse := 0.5 + 0.5 * sin(time * 4.0)
 			var bc: Color = C_BUY if can else Color(0.5, 0.42, 0.6)
-			var bp := _chamfer(br.grow(2.0 if hov else 0.0), 10.0)
+			var bp := Style.chamfer_pts(br.grow(2.0 if hov else 0.0), 10.0)
 			draw_colored_polygon(bp, Color(0.04, 0.16, 0.08, 0.95) if can else Color(0.07, 0.03, 0.1, 0.95))
 			bp.append(bp[0])
 			draw_polyline(bp, Color(bc.r, bc.g, bc.b, (0.6 + 0.4 * pulse) if can else 0.7), 2.0, true)
@@ -134,17 +134,17 @@ func _draw_armory() -> void:
 			var f: float = flash.get(u["id"], 0.0) / 0.6
 			if f > 0.0:
 				fill = fill.lerp(Color(0.6, 0.6, 0.6), f * 0.6)
-			var plate := _chamfer(rr.grow(2.0 if hov else 0.0), 9.0)
+			var plate := Style.chamfer_pts(rr.grow(2.0 if hov else 0.0), 9.0)
 			draw_colored_polygon(plate, fill)
 			plate.append(plate[0])
 			draw_polyline(plate, Color(border.r, border.g, border.b, 1.0 if hov else 0.8), 2.0 if hov else 1.3, true)
 			if f > 0.0:
-				draw_polyline(_chamfer(rr.grow(4.0 + (1.0 - f) * 10.0), 9.0), Color(wc.r, wc.g, wc.b, f), 2.0, true)
+				draw_polyline(Style.chamfer_pts(rr.grow(4.0 + (1.0 - f) * 10.0), 9.0), Color(wc.r, wc.g, wc.b, f), 2.0, true)
 			# ikona
 			var uc := rr.position + Vector2(26, 35)
 			var uo := _octagon(uc, 16.0)
 			draw_colored_polygon(uo, Color(border.r * 0.15, border.g * 0.15, border.b * 0.15, 1.0))
-			draw_polyline(_closed(uo), border, 1.5, true)
+			draw_polyline(Style.closed(uo), border, 1.5, true)
 			Style.draw_icon(self, Style.icon_for(u["id"]), uc, 8.5, wc if lv > 0 or st == "buy" else Color(0.55, 0.5, 0.65), 1.5)
 			var lx := rr.position.x + 52
 			_text(Vector2(lx, rr.position.y + 22), String(u["label"]), 13, C_BUY if st == "buy" else (Style.GOLD if st == "max" else Color(0.95, 0.9, 1.0)))
