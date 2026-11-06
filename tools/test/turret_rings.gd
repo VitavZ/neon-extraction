@@ -33,6 +33,7 @@ func _run() -> void:
 	if OS.get_environment("NEON_NO_RINGS") == "1":
 		w.show_ranges = false
 	var frames := 0
+	var seg_log: Array = []
 	var t0 := Time.get_ticks_msec()
 	var worst := 0.0
 	var last := Time.get_ticks_usec()
@@ -47,6 +48,9 @@ func _run() -> void:
 		worst = maxf(worst, (now - last) / 1000.0)
 		last = now
 		frames += 1
+		if frames % 20 == 0:
+			seg_log.append("%d/%d" % [w._ring_cache_pts[0].size() / 2, w._ring_cache_pts[1].size() / 2])
+	print("[TEST] odcinki obrysu (zwykłe/rakietowe) co 20 klatek: " + " ".join(seg_log))
 	print("[TEST] średnio %.1f FPS, najgorsza klatka %.1f ms" % [frames / 4.0, worst])
 	print("[TEST] skrypty (_process) %.1f ms/klatkę, wywołania rysowania %d, prymitywy %d, obiekty %d" % [Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
 		Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)])

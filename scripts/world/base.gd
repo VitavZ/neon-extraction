@@ -77,8 +77,6 @@ const MISSILE_LASER_RADIUS := 30.0
 
 var surface := PackedByteArray()
 var deposit := PackedByteArray()
-var _ring_q: Array = []          # okręgi zasięgu do narysowania w tej klatce
-var _ring_view := Rect2()
 var show_ranges := true
 var _idx_cache := PackedInt32Array()
 var layer := PackedByteArray()

@@ -2,6 +2,12 @@ extends "res://scripts/world/defense.gd"
 ## Mapa świata, część 5/5: warstwy rysowane co klatkę - skaner, wieżyczki, okręgi zasięgu, granice sektorów, rakiety, napisy miast.
 
 
+var _scan_pts := PackedVector2Array()
+var _scan_cols := PackedColorArray()
+var _scan_built_center := -1
+var _scan_built_t := -10.0
+
+
 func _draw_scan() -> void:
 	var rad := int(GameState.stat("scanner"))
 	if rad <= 0 or ship == null or ship.docked:
@@ -22,15 +28,27 @@ func _draw_scan() -> void:
 				var i := y * N + x
 				if deposit[i] != 0:
 					scan_tiles.append(i)
-	var pulse := 0.5 + 0.5 * sin(time * 4.0)
-	for i in scan_tiles:
-		if layer[i] != L_SURFACE:
-			continue
-		var c: Color = DEP_DEFS[deposit[i]]["color"]
-		var p := idx_center(i)
+	# romby złóż jednym wywołaniem; geometria składana po zmianie kafelka pod statkiem albo co 0,5 s
+	if ctr != _scan_built_center or time - _scan_built_t > 0.5:
+		_scan_built_center = ctr
+		_scan_built_t = time
+		_scan_pts = PackedVector2Array()
+		_scan_cols = PackedColorArray()
 		var s := 7.0
-		var poly := PackedVector2Array([p + Vector2(0, -s), p + Vector2(s, 0), p + Vector2(0, s), p + Vector2(-s, 0), p + Vector2(0, -s)])
-		scan_layer.draw_polyline(poly, Color(c.r, c.g, c.b, 0.5 + 0.5 * pulse), 1.5, true)
+		for i in scan_tiles:
+			if layer[i] != L_SURFACE:
+				continue
+			var c: Color = DEP_DEFS[deposit[i]]["color"]
+			var p := idx_center(i)
+			var a := p + Vector2(0, -s)
+			var b := p + Vector2(s, 0)
+			var d := p + Vector2(0, s)
+			var e := p + Vector2(-s, 0)
+			_scan_pts.append_array([a, b, b, d, d, e, e, a])
+			_scan_cols.append_array([c, c, c, c])
+	if not _scan_pts.is_empty():
+		scan_layer.draw_multiline_colors(_scan_pts, _scan_cols, 1.5)
+	scan_layer.self_modulate.a = 0.6 + 0.4 * sin(time * 4.0)
 	var sp: Vector2 = ship.global_position
 	scan_layer.draw_arc(sp, rad * T + T * 0.5, 0.0, TAU, 64, Color(0.5, 0.17, 1.25, 0.25), 1.0, true)
 
@@ -73,23 +91,15 @@ func _draw_overlay() -> void:
 	if not GameState.training:
 		_draw_sector_borders(cam_rect)
 		_draw_metro_last(cam_rect)
-	# szerszy obszar: okrąg zasięgu wieżyczki spoza ekranu też musi być widoczny
-	_ring_view = cam_rect
-	_ring_q.clear()
-	# obrys zasięgów zmienia się wolno: składany najwyżej co 0,25 s albo po przelocie 60 px
-	_ring_skip = ship != null and not _ring_pending and _ring_arcs_n == turrets.size() and time - _ring_cache_t < 0.25 \
-		and ship.global_position.distance_to(_ring_cache_pos) < 60.0
 	# zwykłe wieżyczki rysowane hurtem: trzy wywołania na wszystkie zamiast pięciu na każdą
 	var body_pts := PackedVector2Array()
 	var body_col := PackedColorArray()
 	var top_pts := PackedVector2Array()
 	var top_col := PackedColorArray()
 	var outline := PackedVector2Array()
-	for i in turrets_in_rect(cam_rect.grow(MISSILE_RANGE)):
+	for i in turrets_in_rect(cam_rect):
 		var tp := idx_center(i)
 		if not cam_rect.has_point(tp):
-			_range_ring(tp, MISSILE_RANGE if turrets[i].get("kind", "") == "missile" else TURRET_RANGE,
-				Color(1.45, 0.1, 0.35) if turrets[i].get("kind", "") == "missile" else Color(1.3, 0.2, 0.15), i)
 			continue
 		if turrets[i].get("kind", "") == "missile":
 			_draw_missile_turret(tp, turrets[i], i)
@@ -115,14 +125,12 @@ func _draw_overlay() -> void:
 		for k in 6:
 			top_pts.append_array([tp, tp + HEX_UNIT[k] * 3.2, tp + HEX_UNIT[k + 1] * 3.2])
 			top_col.append_array([dc, dc, dc])
-		# zasięg tylko tych wieżyczek, które właśnie mogą trafić statek (mniej linii w gęstych miastach)
-		_range_ring(tp, TURRET_RANGE, Color(1.3, 0.2, 0.15), i)
 	if not body_pts.is_empty():
 		var ci := overlay.get_canvas_item()
 		RenderingServer.canvas_item_add_triangle_array(ci, _seq_indices(body_pts.size()), body_pts, body_col)
 		overlay.draw_multiline(outline, Color(1.25, 0.22, 0.09), 1.8)
 		RenderingServer.canvas_item_add_triangle_array(ci, _seq_indices(top_pts.size()), top_pts, top_col)
-	_flush_rings()
+	_flush_rings(cam_rect)
 
 	# wieżyczki Imperium i ich strzały
 	for i in ally_turrets:
@@ -242,24 +250,6 @@ func _draw_missile_turret(tp: Vector2, t: Dictionary, i: int) -> void:
 	var n := d.orthogonal()
 	overlay.draw_colored_polygon(PackedVector2Array([tp + d * 12.0, tp + n * 4.5, tp - d * 7.0 + n * 4.5, tp - d * 7.0 - n * 4.5, tp - n * 4.5]), Color(1.4, 1.4, 1.4))
 	overlay.draw_line(tp - d * 7.0 + n * 7.0, tp - d * 7.0 - n * 7.0, Color(1.4, 1.4, 1.4), 2.0)
-	_range_ring(tp, MISSILE_RANGE, Color(1.45, 0.1, 0.35), i)
-
-
-## Zasięg wrogiej wieżyczki: wyraźna linia z poświatą i sunącymi kreskami na zewnątrz.
-## Pojawia się już na 900 px przed granicą (widać strefę, zanim się w nią wleci), w środku świeci pełną mocą.
-## Okręgi trafiają najpierw do kolejki (_ring_q), a rysuje je _flush_rings: pełny wygląd mają tylko
-## najbliższe statkowi, reszta to sama cienka linia. Okręgi całkiem poza ekranem są pomijane.
-func _range_ring(tp: Vector2, r: float, c: Color, i: int) -> void:
-	if _ring_skip or ship == null or ship.docked or not show_ranges:
-		return
-	var d: float = tp.distance_to(ship.global_position)
-	# strefę widać z daleka (900 px przed granicą) - obrys jest tani, bo zapamiętany
-	var k := clampf((r + 900.0 - d) / 900.0, 0.0, 1.0)
-	if k <= 0.0:
-		return
-	if not _ring_view.intersects(Rect2(tp - Vector2(r + 8.0, r + 8.0), Vector2(r + 8.0, r + 8.0) * 2.0)):
-		return
-	_ring_q.append([d, tp, r, c, i, k * (1.0 if d < r else 0.7)])
 
 
 ## Indeksy 0..n-1 dla tablic trójkątów (pamiętane, żeby nie budować ich co klatkę).
@@ -272,106 +262,180 @@ func _seq_indices(n: int) -> PackedInt32Array:
 	return _idx_cache.slice(0, n)
 
 
-## Zasięgi wieżyczek zlewają się w jeden obrys strefy chronionej: każdy okrąg ma zapamiętane tylko te łuki,
-## które nie leżą w zasięgu sąsiedniej wieżyczki tego samego rodzaju. Łuki liczy się raz (pamięć podręczna
-## czyszczona, gdy zmieni się liczba wieżyczek), a co klatkę wszystkie idą na ekran dwoma wywołaniami.
-var _ring_arcs: Dictionary = {}       # indeks wieżyczki -> PackedVector2Array par końców odcinków
-var _ring_arcs_n := -1                # liczba wieżyczek, dla której liczono łuki
-const RING_CHORD := 36.0              # długość odcinka obrysu w pikselach
+## Zasięgi wrogich wieżyczek jako strefy chronione: zasięgi tego samego rodzaju zlewają się w jeden obszar
+## z przezroczystym wypełnieniem i świecącym obrysem (zwykłe wieżyczki i rakietowe mają własne kolory).
+## Pokazywane są wszystkie strefy, które wchodzą w kadr kamery.
+## - Obrys: każda wieżyczka ma zapamiętane tylko te łuki swojego okręgu, które nie leżą w zasięgu sąsiadki
+##   tego samego rodzaju (liczone raz; pamięć czyszczona, gdy zmieni się liczba wieżyczek).
+## - Wypełnienie: nieprzezroczyste koła w CanvasGroup, a przezroczystość nadaje cała grupa - dzięki temu
+##   nakładające się zasięgi nie ciemnieją, tylko tworzą jednolity obszar.
+## - Strefy składane są najwyżej co 0,25 s albo gdy kamera przesunie się o 80 px; w pozostałych klatkach
+##   rysuje się zapamiętane linie, a wypełnienie w ogóle nie jest przerysowywane.
+const RING_CHORD := 18.0                  # długość odcinka obrysu w pikselach (gęsto = gładki łuk)
+const RING_BUILDS_PER_FRAME := 16         # nowe obrysy liczone na klatkę (wlot do miasta nie zacina gry)
+const RING_LINE := [Color(1.4, 0.32, 0.1), Color(0.95, 0.3, 1.5)]      # zwykłe (pomarańczowo-czerwone) / rakietowe (fioletowe)
+const RING_FILL := [Color(1.0, 0.3, 0.08, 0.10), Color(0.6, 0.2, 1.0, 0.10)]
+var _ring_arcs: Dictionary = {}           # indeks wieżyczki -> PackedVector2Array par końców odcinków
+var _ring_arcs_n := -1                    # liczba wieżyczek, dla której liczono łuki
+var _ring_stale: Dictionary = {}          # obrysy do przeliczenia (sąsiadki zniszczonej wieżyczki); do tego czasu rysuje się stary
+var _ring_skip := false                   # ta klatka rysuje zapamiętane strefy
+var _ring_pending := false                # część obrysów czeka na policzenie
+var _ring_cache_pts: Array = [PackedVector2Array(), PackedVector2Array()]
+var _ring_cache_t := -10.0
+var _ring_cache_pos := Vector2.INF
+var _fill_groups: Array = []              # 2 x CanvasGroup
+var _fill_nodes: Array = []               # 2 x Node2D rysujące koła
+var _fill_circles: Array = [PackedVector2Array(), PackedVector2Array()]
 
 
 func _ring_outline(i: int, tp: Vector2, r: float) -> PackedVector2Array:
 	if _ring_arcs.has(i):
 		return _ring_arcs[i]
 	var missile: bool = turrets[i].get("kind", "") == "missile"
-	var others: Array = []
+	var others := PackedVector2Array()
 	for j in turrets_in_rect(Rect2(tp - Vector2(r, r) * 2.0, Vector2(r, r) * 4.0)):
-		if j != i and (turrets[j].get("kind", "") == "missile") == missile and idx_center(j).distance_to(tp) < r * 2.0:
-			others.append(idx_center(j))
+		if j != i and (turrets[j].get("kind", "") == "missile") == missile:
+			var oc := idx_center(j)
+			if oc.distance_squared_to(tp) < r * r * 4.0:
+				others.append(oc)
+	var rr := r * r - 1.0
 	var n := maxi(24, int(TAU * r / RING_CHORD))
-	var inside := func(p: Vector2) -> bool:
+	var pts := PackedVector2Array()
+	var ins := PackedByteArray()
+	pts.resize(n + 1)
+	ins.resize(n + 1)
+	for k in n + 1:
+		var p := tp + Vector2.from_angle(TAU * k / n) * r
+		pts[k] = p
+		var hit := 0
 		for o in others:
-			if p.distance_squared_to(o) < r * r - 1.0:
-				return true
-		return false
+			if p.distance_squared_to(o) < rr:
+				hit = 1
+				break
+		ins[k] = hit
 	var out := PackedVector2Array()
-	var prev := tp + Vector2(r, 0.0)
-	var prev_in: bool = inside.call(prev)
 	for k in range(1, n + 1):
-		var a1 := TAU * k / n
-		var cur := tp + Vector2.from_angle(a1) * r
-		var cur_in: bool = inside.call(cur)
-		if not prev_in or not cur_in:
-			var p0 := prev
-			var p1 := cur
-			if prev_in != cur_in:
-				# dokładny punkt styku dwóch zasięgów (połowienie kąta), żeby obrysy domykały się bez szpar
-				var lo := TAU * (k - 1) / n
-				var hi := a1
-				for it in 6:
-					var mid := (lo + hi) * 0.5
-					var mid_in: bool = inside.call(tp + Vector2.from_angle(mid) * r)
-					if mid_in == prev_in:
-						lo = mid
-					else:
-						hi = mid
-				var edge := tp + Vector2.from_angle((lo + hi) * 0.5) * r
-				if prev_in:
-					p0 = edge
+		var a_in := ins[k - 1] == 1
+		var b_in := ins[k] == 1
+		if a_in and b_in:
+			continue
+		var p0 := pts[k - 1]
+		var p1 := pts[k]
+		if a_in != b_in:
+			# dokładny punkt styku dwóch zasięgów (połowienie kąta), żeby obrysy domykały się bez szpar
+			var lo := TAU * (k - 1) / n
+			var hi := TAU * k / n
+			for it in 6:
+				var mid := (lo + hi) * 0.5
+				var mp := tp + Vector2.from_angle(mid) * r
+				var m_in := false
+				for o in others:
+					if mp.distance_squared_to(o) < rr:
+						m_in = true
+						break
+				if m_in == a_in:
+					lo = mid
 				else:
-					p1 = edge
-			out.append(p0)
-			out.append(p1)
-		prev = cur
-		prev_in = cur_in
+					hi = mid
+			var edge := tp + Vector2.from_angle((lo + hi) * 0.5) * r
+			if a_in:
+				p0 = edge
+			else:
+				p1 = edge
+		out.append(p0)
+		out.append(p1)
 	_ring_arcs[i] = out
 	return out
 
 
-const RING_BUILDS_PER_FRAME := 6      # nowe obrysy liczone na klatkę (wlot do miasta nie zacina gry)
-var _ring_skip := false               # ta klatka rysuje zapamiętany obrys
-var _ring_pending := false            # część obrysów czeka na policzenie
-var _ring_cache_pts: Array = [PackedVector2Array(), PackedVector2Array()]
-var _ring_cache_col: Array = [Color(), Color()]
-var _ring_cache_t := -10.0
-var _ring_cache_pos := Vector2.INF
+## Zniszczona wieżyczka: jej obrys znika, a sąsiadki w zasięgu dostają obrys do przeliczenia (bez czyszczenia wszystkiego,
+## żeby strzelanie w miasto nie powodowało migania stref).
+func _ring_turrets_changed() -> void:
+	_ring_arcs_n = turrets.size()
+	var removed: Array = []
+	for i in _ring_arcs.keys():
+		if not turrets.has(i):
+			removed.append(idx_center(i))
+			_ring_arcs.erase(i)
+			_ring_stale.erase(i)
+	for p in removed:
+		var reach := MISSILE_RANGE * 2.0
+		for j in turrets_in_rect(Rect2(p - Vector2(reach, reach), Vector2(reach, reach) * 2.0)):
+			if _ring_arcs.has(j):
+				_ring_stale[j] = true
 
 
-func _flush_rings() -> void:
-	if not show_ranges or ship == null or ship.docked:
-		_ring_q.clear()
+func _ensure_fill() -> void:
+	if not _fill_groups.is_empty():
 		return
-	if _ring_skip:
+	for g in 2:
+		var grp := CanvasGroup.new()
+		grp.z_index = 2
+		grp.self_modulate = RING_FILL[g]
+		add_child(grp)
+		var node := Node2D.new()
+		grp.add_child(node)
+		node.draw.connect(_draw_fill.bind(g))
+		_fill_groups.append(grp)
+		_fill_nodes.append(node)
+
+
+func _draw_fill(g: int) -> void:
+	var r: float = MISSILE_RANGE if g == 1 else TURRET_RANGE
+	var node: Node2D = _fill_nodes[g]
+	for c in _fill_circles[g]:
+		node.draw_circle(c, r, Color(1, 1, 1, 1))
+
+
+func _flush_rings(view: Rect2) -> void:
+	_ensure_fill()
+	var on: bool = show_ranges and ship != null and not ship.docked
+	for g in 2:
+		_fill_groups[g].visible = on
+	if not on:
+		return
+	var center := view.get_center()
+	if not (_ring_pending or _ring_arcs_n != turrets.size() or time - _ring_cache_t >= 0.25 or center.distance_to(_ring_cache_pos) >= 80.0):
 		_draw_ring_cache()
 		return
 	if _ring_arcs_n != turrets.size():
-		_ring_arcs.clear()
-		_ring_arcs_n = turrets.size()
-	# dwa obrysy: zwykłe wieżyczki i rakietowe, każdy jednym kolorem (dwa wywołania na rodzaj)
+		_ring_turrets_changed()
+	var q: Array = []
+	for i in turrets_in_rect(view.grow(MISSILE_RANGE + T)):
+		var tp := idx_center(i)
+		var r: float = MISSILE_RANGE if turrets[i].get("kind", "") == "missile" else TURRET_RANGE
+		if view.intersects(Rect2(tp - Vector2(r, r), Vector2(r, r) * 2.0)):
+			q.append([tp.distance_squared_to(center), tp, r, i])
+	# najbliższe środka kadru najpierw (sortowanie tylko, gdy są obrysy do policzenia)
+	for e in q:
+		if not _ring_arcs.has(int(e[3])) or _ring_stale.has(int(e[3])):
+			q.sort_custom(func(x, y): return x[0] < y[0])
+			break
 	var pts := [PackedVector2Array(), PackedVector2Array()]
-	var col: Array = [Color(), Color()]
+	var circles := [PackedVector2Array(), PackedVector2Array()]
 	var builds := 0
 	_ring_pending = false
-	# najbliższe statkowi najpierw (sortowanie tylko, gdy są obrysy do policzenia)
-	for e in _ring_q:
-		if not _ring_arcs.has(int(e[4])):
-			_ring_q.sort_custom(func(x, y): return x[0] < y[0])
-			break
-	for e in _ring_q:
-		var i: int = e[4]
-		if not _ring_arcs.has(i):
+	for e in q:
+		var i: int = e[3]
+		var g := 1 if float(e[2]) == MISSILE_RANGE else 0
+		circles[g].append(e[1])
+		if not _ring_arcs.has(i) or _ring_stale.has(i):
 			if builds >= RING_BUILDS_PER_FRAME:
 				_ring_pending = true
+				if _ring_arcs.has(i):
+					pts[g].append_array(_ring_arcs[i])   # stary obrys, dopóki nowy nie jest policzony
 				continue
 			builds += 1
-		var g := 1 if float(e[2]) == MISSILE_RANGE else 0
+			_ring_arcs.erase(i)
+			_ring_stale.erase(i)
 		pts[g].append_array(_ring_outline(i, e[1], e[2]))
-		col[g] = e[3]
 	_ring_cache_pts = pts
-	_ring_cache_col = col
 	_ring_cache_t = time
-	_ring_cache_pos = ship.global_position
-	_ring_q.clear()
+	_ring_cache_pos = center
+	for g in 2:
+		if circles[g] != _fill_circles[g]:
+			_fill_circles[g] = circles[g]
+			_fill_nodes[g].queue_redraw()
 	_draw_ring_cache()
 
 
@@ -381,9 +445,9 @@ func _draw_ring_cache() -> void:
 		var pts: PackedVector2Array = _ring_cache_pts[g]
 		if pts.is_empty():
 			continue
-		var c: Color = _ring_cache_col[g]
+		var c: Color = RING_LINE[g]
 		overlay.draw_multiline(pts, Color(c.r, c.g, c.b, 0.12), 12.0)
-		overlay.draw_multiline(pts, Color(c.r, c.g, c.b, 0.45 + 0.2 * pulse), 2.5)
+		overlay.draw_multiline(pts, Color(c.r, c.g, c.b, 0.5 + 0.2 * pulse), 2.5)
 
 
 func _draw_missile(m: Dictionary) -> void:
