@@ -52,6 +52,8 @@ const OTHER := [
 	["Duży napis - atak odparty", "ATAK ODPARTY / Statek Matka ocalał"],
 	["Próba dokowania od ataku do końca", "HANGAR ZABLOKOWANY — nie ma odwrotu!"],
 	["Pauza -> powrót na Matkę od ataku do końca", "Nie ma odwrotu — walcz!"],
+	["Pusty bak (cała gra) - duży napis", "BRAK PALIWA! / Reaktor wybuchnie za 5 s"],
+	["Pusty bak (cała gra) - pasek paliwa", "PALIWO — PUSTO! WYBUCH ZA 5 s"],
 	["Ostrzeżenie - wielki napis", "DANGER!"],
 	["Ostrzeżenie - podpis", "NIEZIDENTYFIKOWANY OBIEKT NA KURSIE KOLIZYJNYM"],
 	["Boss - nazwa (duży napis i pasek)", "OBIEKT-51"],

@@ -50,6 +50,9 @@ var fx: Node2D
 var trail: Line2D
 var time := 0.0
 
+const EMPTY_FUSE := 5.0          # tyle sekund bez paliwa do wybuchu statku
+const TRAINING_BURN := 0.4       # szkolenie: paliwo schodzi wolniej
+var empty_t := 0.0
 const SIPHON_FUEL_PER_S := 1.0   # najwięcej paliwa na sekundę z Syfonu energetycznego
 const SIPHON_HULL_PER_S := 10.0  # najwięcej kadłuba na sekundę z Rekonstrukcji z materii
 var siphon_fuel_left := SIPHON_FUEL_PER_S
@@ -93,6 +96,7 @@ func reset_for_launch() -> void:
 	shield = GameState.stat("max_shield")
 	fuel = GameState.stat("max_fuel")
 	fuel_warned = false
+	empty_t = 0.0
 	drifting = false
 	drift_charge = 0.0
 	since_hit = 10.0
@@ -250,12 +254,19 @@ func _process(delta: float) -> void:
 	if firing or abducting or rebuilding:
 		burn += 0.8
 	burn *= maxf(0.2, 1.0 - GameState.stat("fuel_efficiency"))
+	if GameState.training:
+		burn *= TRAINING_BURN
 	fuel = maxf(0.0, fuel - burn * delta)
 	if no_fuel:
-		# systemy podtrzymania życia zżerają kadłub (1% na sekundę, co najmniej 3) - trzeba wracać
+		# pusty bak: po EMPTY_FUSE sekundach reaktor wybucha (do tego czasu kadłub się sypie)
+		empty_t += delta
 		hull -= maxf(3.0, GameState.stat("max_hull") * 0.01) * delta
-		if hull <= 0.0:
-			take_damage(1.0)
+		if empty_t >= EMPTY_FUSE or hull <= 0.0:
+			shield = 0.0
+			hull = minf(hull, 0.5)
+			take_damage(1000000.0)
+	else:
+		empty_t = 0.0
 
 	queue_redraw()
 

@@ -28,6 +28,8 @@ var arm_k := 0
 var rockets: Array = []        # {pos, vel, target, life, trail}
 var hp := -1.0
 var siege := false             # trwa atak Ziemian
+var defense_slow := 1.0        # mnożnik odstępu rakiet obrony (szkolenie: obronę musi wesprzeć gracz)
+var min_hp_frac := 0.0         # kadłub nie spada poniżej tej części (szkolenie: Matki nie da się zniszczyć)
 var wrecked := false
 var wreck_t := 0.0
 var flash := 0.0
@@ -72,7 +74,7 @@ func _process(delta: float) -> void:
 func hurt(_d: Dictionary, amount: float) -> void:
 	if wrecked:
 		return
-	hp -= amount
+	hp = maxf(hp - amount, max_hp() * min_hp_frac)
 	flash = 0.12
 	if hp <= 0.0:
 		_wreck()
@@ -128,7 +130,7 @@ func _defense(delta: float) -> void:
 		if tgt.is_empty():
 			fire_t = 0.4
 		else:
-			fire_t = ROCKET_INTERVAL
+			fire_t = ROCKET_INTERVAL * defense_slow
 			_launch(tgt)
 	var k := rockets.size() - 1
 	while k >= 0:

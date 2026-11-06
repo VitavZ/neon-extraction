@@ -52,10 +52,12 @@ func _screen_of(world_pos: Vector2) -> Vector2:
 
 ## Czeka na okienko ćwiczenia d, sprawdza, że ćwiczenie jeszcze nie jest zaliczone, i zamyka okienko.
 func _open_drill(d: int) -> void:
-	for k in 40:
+	var w0 := Time.get_ticks_msec()
+	for k in 60:
 		if tut.showing and tut.cstep == d + 1:
 			break
 		await _wait(0.1)
+	_log("  okienko po %.1f s" % ((Time.get_ticks_msec() - w0) / 1000.0))
 	_expect("okienko ćwiczenia %d (%s)" % [d + 1, tr.DRILLS[d][0]], tut.showing and tut.cstep == d + 1)
 	if d == 0:
 		await _shot("c01_popup_aim")
@@ -142,8 +144,22 @@ func _run() -> void:
 	_key(KEY_Q, false)
 	await _wait(0.8)
 	_expect("rakieta zaliczona, faza zbierania", tr.drill == 8 and tr.phase == tr.GATHER)
-	await _wait(1.5)
-	_expect("okienko 'ZADANIE: SUROWCE'", tut.showing and tut.cstep == tr.MAIN_STEP)
+	var w1 := Time.get_ticks_msec()
+	var big_seen := false
+	while not tut.showing and Time.get_ticks_msec() - w1 < 9000:
+		if main.hud.big_t >= 0.0:
+			big_seen = true
+		await _wait(0.1)
+	_expect("okienko 'ZADANIE: SUROWCE' po dużym napisie (%.1f s)" % ((Time.get_ticks_msec() - w1) / 1000.0), tut.showing and tut.cstep == tr.MAIN_STEP and big_seen and main.hud.big_t < 0.0)
+	var f0: float = main.ship.fuel
+	tut._dismiss()
+	await _wait(3.0)
+	_log("paliwo w szkoleniu: -%.2f / s (bez ruchu)" % ((f0 - main.ship.fuel) / 3.0))
+	main.ship.fuel = 0.0
+	var w2 := Time.get_ticks_msec()
+	while not main.ship.dead and Time.get_ticks_msec() - w2 < 9000:
+		await _wait(0.1)
+	_expect("pusty bak: wybuch po %.1f s" % ((Time.get_ticks_msec() - w2) / 1000.0), main.ship.dead)
 	await _shot("c03_gather_popup")
 	_log("błędów: %d" % bad)
 	quit()

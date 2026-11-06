@@ -135,6 +135,18 @@ func _draw_grid_fx() -> void:
 	var half := _node_r() * 0.86
 	var w := clampf(z, 0.6, 1.4)
 	var area := Rect2(grid_view.position, grid_view.size).grow(half * 2.0)
+	# szkolenie: wirujące pierścienie i strzałka nad węzłem, który trzeba kupić
+	if highlight_id != "" and vis_ids.has(highlight_id):
+		var hpos := _node_pos(Upgrades.by_id(highlight_id))
+		var hr := half * 1.9
+		for k in 3:
+			var a0 := time * (2.2 - k * 0.6) + k * TAU / 3.0
+			cv.draw_arc(hpos, hr + k * 7.0 * z, a0, a0 + TAU * 0.28, 24, Color(1.4, 1.1, 0.35, 0.9 - k * 0.2), 3.0 * w, true)
+			cv.draw_arc(hpos, hr + k * 7.0 * z, a0 + PI, a0 + PI + TAU * 0.28, 24, Color(1.4, 1.1, 0.35, 0.9 - k * 0.2), 3.0 * w, true)
+		var pul := fmod(time * 1.2, 1.0)
+		cv.draw_arc(hpos, hr * (1.0 + 0.6 * pul), 0.0, TAU, 48, Color(1.4, 1.1, 0.35, 0.5 * (1.0 - pul)), 2.0, true)
+		var ay := hpos.y - hr - 34.0 * z - 6.0 * sin(time * 6.0)
+		cv.draw_colored_polygon(PackedVector2Array([Vector2(hpos.x, ay + 16.0 * z), Vector2(hpos.x - 11.0 * z, ay), Vector2(hpos.x + 11.0 * z, ay)]), Color(1.4, 1.1, 0.35))
 	for u in vis_nodes:
 		var id: String = u["id"]
 		var p := _node_pos(u)

@@ -87,6 +87,7 @@ var drag_moved := 0.0
 var bridge_hover := -1            # sektor pod kursorem w Sterowni
 var bridge_sel := -1              # sektor wybrany jako cel przenosin
 var bridge_hover_btn := false
+var highlight_id := ""             # szkolenie: węzeł do kupienia (wirujący pierścień i strzałka)
 
 const C_BUY := Color(0.36, 1.0, 0.48)
 const C_LINE_ON := Color(0.35, 1.0, 0.45)

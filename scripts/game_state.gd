@@ -393,6 +393,9 @@ func recalc_stats() -> void:
 			continue
 		for k in u["effects"]:
 			stats[k] = float(stats.get(k, 0.0)) + contribution(u, k, lv)
+	if training:
+		for k in Training.STAT_BONUS:
+			stats[k] = float(stats.get(k, 0.0)) + float(Training.STAT_BONUS[k])
 	# zaokrąglenie do kroku usuwa ślady arytmetyki zmiennoprzecinkowej (0.1 + 0.2 ...)
 	for k in stats:
 		stats[k] = snappedf(float(stats[k]), 0.001)

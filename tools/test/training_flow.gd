@@ -87,6 +87,9 @@ func _run() -> void:
 	main.dock("test", true, true)
 	await _wait(1.0)
 	_log("po dokowaniu z surowcami: %s" % _phase_name())
+	main.tutorial._dismiss()
+	await _wait(0.5)
+	await _shot("t035_highlight_laser")
 	gs.buy(Upgrades.by_id("laser_dmg"))
 	await _wait(0.5)
 	_log("po zakupie lasera (%d): %s" % [gs.stat("laser_dps"), _phase_name()])
@@ -121,8 +124,9 @@ func _run() -> void:
 	await _wait(1.0)
 	_log("po odbudowie %d%%: %s" % [int(tr.rebuilt_frac() * 100), _phase_name()])
 	main.ship.position = main.mothership.position + Vector2(250, 0)
-	await _wait(2.0)
+	await _wait(4.0)
 	await _shot("t06_siege")
+	_log("atak: wrogów %d, Matka %d%%" % [main.enemies.alive_count(), int(main.mothership.hp / main.mothership.max_hp() * 100.0)])
 	main.ship.hull = 99999.0
 	for f in main.enemies.fighters:
 		main.enemies.damage_fighter(f, 1e7)

@@ -523,7 +523,7 @@ func _draw() -> void:
 	var flabel := "PALIWO"
 	if ship.fuel <= 0.0:
 		fc = Style.RED if int(time * 4.0) % 2 == 0 else Color(0.5, 0.05, 0.05)
-		flabel = "PALIWO — PUSTO! WRACAJ"
+		flabel = "PALIWO — PUSTO! WYBUCH ZA %d s" % int(ceil(maxf(0.0, ship.EMPTY_FUSE - ship.empty_t)))
 	elif ship.fuel < mf * 0.25:
 		fc = Color(1.0, 0.45, 0.1) if int(time * 3.0) % 2 == 0 else Color(1.0, 0.85, 0.2)
 		flabel = "PALIWO — NISKI POZIOM"

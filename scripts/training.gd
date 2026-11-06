@@ -27,6 +27,8 @@ const LEVELS := {
 }
 const BANK := {}
 ## Ceny w szkoleniu (zamiast zwykłych): mało, żeby zebrać je w jednym locie.
+## Szkolenie: mocniejsza odbudowa od razu (dodawane w GameState.recalc_stats).
+const STAT_BONUS := {"rebuild_range": 240.0, "rebuild_speed": 0.5}
 const COSTS := {
 	"laser_dmg": {"biomass": 40, "stone": 30},
 	"rebuild": {"scrap": 30, "metal": 15},
@@ -114,6 +116,8 @@ var drill_rot := 0.0
 var drill_zoom := 1.0
 var drill_ammo := 0
 var drill_flag := false
+var popup_hold_until := 0.0          # okienko po wykonanym zadaniu pojawia się z opóźnieniem
+const POPUP_DELAY := 1.8
 var t := 0.0                          # czas fazy
 var time := 0.0
 var town: Array = []                  # kafelki Roswell
@@ -180,6 +184,7 @@ func setup() -> void:
 	tutorial.header = "SZKOLENIE"
 	tutorial.cstep = 0
 	tutorial.custom_cond = _popup_cond
+	tutorial.custom_gate = _popup_gate
 
 
 # =====================================================================
@@ -198,6 +203,7 @@ func handle_death() -> bool:
 	if phase >= SIEGE and phase < BOSS:
 		# atak na Matkę zacznie się od nowa po kolejnym wylocie
 		main.mothership.siege = false
+		main.mothership.defense_slow = 1.0
 		_go(REBUILD)
 	return false
 
@@ -205,6 +211,13 @@ func handle_death() -> bool:
 func _go(p: int) -> void:
 	phase = p
 	t = 0.0
+	popup_hold_until = time + POPUP_DELAY
+
+
+## Okienko otwiera się chwilę po wykonanym zadaniu i nie przerywa dużego napisu na środku ekranu
+## (okienko pauzuje grę, więc napis zamarzłby w połowie).
+func _popup_gate() -> bool:
+	return time >= popup_hold_until and main.hud.big_t < 0.0
 
 
 ## Faza, od której wolno pokazać dane okienko (okienko nie może wyprzedzać prawdziwego postępu).
@@ -269,6 +282,8 @@ func _process(delta: float) -> void:
 		need = 0 if ship.docked and GameState.sorties == 0 else 1 + drill
 	if not tutorial.showing and tutorial.cstep < need:
 		tutorial.cstep = need
+	# podświetlenie węzła do kupienia na siatce ulepszeń
+	main.upgrade_screen.highlight_id = "laser_dmg" if phase == GATHER or phase == UPGRADE else ("rebuild" if phase == UNLOCK else "")
 	match phase:
 		CONTROLS:
 			_update_drill(delta)
@@ -302,6 +317,7 @@ func _process(delta: float) -> void:
 			if t > 1.0 and _siege_left() == 0:
 				_go(CALM)
 				main.mothership.siege = false
+				main.mothership.defense_slow = 1.0
 				main.hud.show_big("ATAK ODPARTY", "Statek Matka ocalał")
 				Audio.play("research_done", 0.0)
 		CALM:
@@ -401,6 +417,7 @@ func _drill_done() -> void:
 	main.fx.ring(ship.global_position, Color(0.45, 1.2, 0.55, 0.8), 70.0, 0.45)
 	main.hud.message("Zaliczone: " + GameState.keys_text(String(DRILLS[drill][1])).replace("[", "").replace("]", ""), Color(0.45, 1.0, 0.55))
 	drill += 1
+	popup_hold_until = time + POPUP_DELAY
 	if drill >= DRILLS.size():
 		_go(GATHER)
 		main.hud.show_big("STEROWANIE OPANOWANE", "Czas na prawdziwe zadanie")
@@ -441,11 +458,17 @@ func _start_siege() -> void:
 	var mp: Vector2 = main.mothership.global_position
 	var enemies = main.enemies
 	var start: int = enemies.fighters.size()
-	enemies.spawn_near(mp, 4)
-	enemies.spawn_near(mp, 1, "gunner")
+	enemies.spawn_near(mp, 10)
+	enemies.spawn_near(mp, 3, "gunner")
 	for k in range(start, enemies.fighters.size()):
-		enemies.fighters[k]["siege"] = true
+		var f: Dictionary = enemies.fighters[k]
+		f["siege"] = true
+		f["hp"] *= 1.3
+		f["max_hp"] = f["hp"]
 	main.mothership.siege = true
+	# Matka broni się wolniej, a zniszczyć jej nie można - obronę musi wesprzeć gracz
+	main.mothership.defense_slow = 3.0
+	main.mothership.min_hp_frac = 0.15
 	Audio.play("alarm", 0.0)
 	main.hud.show_big("ZIEMIA KONTRATAKUJE!", "Statek Matka pod ostrzałem — leć jej bronić!")
 
@@ -581,8 +604,10 @@ func _update_boss(delta: float) -> void:
 				Audio.play("missile_warning", 0.0, 4.0)
 		"charge":
 			laser_t += delta
-			for k in 2:
-				laser_ang[k] = rotate_toward(laser_ang[k], (sp - xf * EMITTERS[k]).angle(), 2.5 * delta)
+			# celownik śledzi statek przez pierwsze 0,8 s, potem stoi - jest chwila, żeby zejść z linii
+			if laser_t < 0.8:
+				for k in 2:
+					laser_ang[k] = rotate_toward(laser_ang[k], (sp - xf * EMITTERS[k]).angle(), 2.5 * delta)
 			if laser_t >= 1.3:
 				laser_state = "fire"
 				laser_t = 0.0
@@ -591,7 +616,7 @@ func _update_boss(delta: float) -> void:
 			laser_t += delta
 			for k in 2:
 				var e: Vector2 = xf * EMITTERS[k]
-				laser_ang[k] = rotate_toward(laser_ang[k], (sp - e).angle(), (0.9 + t * 0.02) * delta)
+				laser_ang[k] = rotate_toward(laser_ang[k], (sp - e).angle(), minf(0.35 + t * 0.005, 0.55) * delta)
 				var end := e + Vector2.from_angle(laser_ang[k]) * 1500.0
 				var cp := Geometry2D.get_closest_point_to_segment(sp, e, end)
 				if cp.distance_to(sp) < 20.0:

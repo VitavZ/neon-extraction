@@ -43,6 +43,7 @@ var layout_src := ""
 var steps: Array = STEPS
 var custom := false
 var custom_cond: Callable     # func(step: int) -> bool
+var custom_gate: Callable     # func() -> bool: czy wolno teraz OTWORZYĆ okienko (np. po przerwie, bez dużego napisu)
 var cstep := 0
 var header := "SAMOUCZEK"
 
@@ -154,7 +155,7 @@ func _process(delta: float) -> void:
 			_set_step(6)
 			step = 6
 		wait -= delta
-		if wait <= 0.0 and not ship.dead and _cond(step):
+		if wait <= 0.0 and not ship.dead and _cond(step) and (not custom or not custom_gate.is_valid() or custom_gate.call()):
 			Audio.play("popup", 0.0)
 			showing = true
 			open_t = 0.0
