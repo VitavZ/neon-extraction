@@ -163,7 +163,13 @@ func _go(p: int) -> void:
 	t = 0.0
 
 
+## Faza, od której wolno pokazać dane okienko (okienko nie może wyprzedzać prawdziwego postępu).
+const STEP_PHASE := [GATHER, GATHER, UPGRADE, DESTROY, UNLOCK, REBUILD, SIEGE]
+
+
 func _popup_cond(step: int) -> bool:
+	if step >= STEP_PHASE.size() or phase < STEP_PHASE[step]:
+		return false
 	var docked: bool = ship.docked
 	match step:
 		0: return docked
