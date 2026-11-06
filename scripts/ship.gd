@@ -50,7 +50,7 @@ var fx: Node2D
 var trail: Line2D
 var time := 0.0
 
-const EMPTY_DRAIN := 15.0        # ubytek kadłuba na sekundę bez paliwa
+const EMPTY_DRAIN := 30.0        # ubytek kadłuba na sekundę bez paliwa
 const TRAINING_BURN := 0.4       # szkolenie: paliwo schodzi wolniej
 var empty_t := 0.0
 const SIPHON_FUEL_PER_S := 1.0   # najwięcej paliwa na sekundę z Syfonu energetycznego

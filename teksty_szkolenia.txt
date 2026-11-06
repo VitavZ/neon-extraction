@@ -246,10 +246,10 @@ Pauza -> powrót na Matkę od ataku do końca:
 Nie ma odwrotu — walcz!
 
 Pusty bak (cała gra) - duży napis:
-BRAK PALIWA! / Kadłub traci 15 punktów na sekundę — wracaj!
+BRAK PALIWA! / Kadłub traci 30 punktów na sekundę — wracaj!
 
 Pusty bak (cała gra) - pasek paliwa:
-PALIWO — PUSTO! KADŁUB -15/s, WRACAJ
+PALIWO — PUSTO! KADŁUB -30/s, WRACAJ
 
 Ostrzeżenie - wielki napis:
 DANGER!
