@@ -57,6 +57,9 @@ const TUTORIAL := [
 
 var sector := 0
 var city_name := ""
+var boss_title := "STRAŻNICZKA WOLNOŚCI"
+var boss_kind := "liberty"
+var boss_max_hp := BOSS_HP
 var field_h := 900.0
 var field_x := 0.0
 var state := "intro"      # intro / tutorial / stage / warning / boss / boss_dead / win / lose
@@ -117,7 +120,11 @@ var tut_skip := Rect2()
 
 func setup(p_sector: int) -> void:
 	sector = p_sector
-	city_name = GameState.city_name(p_sector)
+	var info: Dictionary = Sectors.boss_info(p_sector)
+	city_name = String(info.get("name", "")) if p_sector >= 100 else GameState.city_name(p_sector)
+	boss_title = Sectors.boss_name(p_sector)
+	boss_kind = String(info.get("boss_kind", "liberty"))
+	boss_max_hp = 1400.0 if p_sector >= 100 else BOSS_HP
 	# ulepszenia statku przekładają się na wytrzymałość i startową siłę ognia
 	max_hp = clampi(3 + int((GameState.stat("max_hull") + GameState.stat("max_shield")) / 100.0), 3, 8)
 	hp = max_hp
@@ -214,7 +221,7 @@ func _step(delta: float) -> void:
 		delta *= 0.35
 	if not music_on and time >= IMPACT:
 		music_on = true
-		var track: String = Sectors.LIST[sector].get("boss_music", "")
+		var track: String = String(Sectors.boss_info(sector).get("boss_music", ""))
 		if track != "":
 			Audio.play_boss_music(track)
 		else:
@@ -736,7 +743,7 @@ func _hurt() -> void:
 func _spawn_boss() -> void:
 	state = "boss"
 	bullets.clear()
-	boss = {"pos": Vector2(FIELD_W * 0.5, -180.0), "hp": BOSS_HP, "t": 0.0, "a1": 1.5, "a2": 0.0, "a3": 3.0, "spin": 0.0, "flash": 0.0, "phase": 0, "recoil": 0.0, "smoke_t": 0.0, "rays": [true, true, true, true, true, true, true]}
+	boss = {"pos": Vector2(FIELD_W * 0.5, -180.0), "hp": boss_max_hp, "max_hp": boss_max_hp, "kind": boss_kind, "t": 0.0, "a1": 1.5, "a2": 0.0, "a3": 3.0, "spin": 0.0, "flash": 0.0, "phase": 0, "recoil": 0.0, "smoke_t": 0.0, "rays": [true, true, true, true, true, true, true]}
 	Audio.play("alarm", 0.0)
 
 
@@ -750,7 +757,7 @@ func _hit_boss(amount: float) -> void:
 	boss["recoil"] = minf(boss["recoil"] + amount * 1.1, 6.0)
 	if state != "boss":
 		return
-	var frac: float = boss["hp"] / BOSS_HP
+	var frac: float = boss["hp"] / maxf(1.0, float(boss.get("max_hp", boss_max_hp)))
 	# korona traci promienie w miarę obrażeń
 	var alive := 0
 	for r in boss["rays"]:
@@ -866,12 +873,15 @@ func _update_boss(delta: float) -> void:
 	boss["flash"] = maxf(0.0, boss["flash"] - delta)
 	boss["recoil"] = move_toward(boss["recoil"], 0.0, 30.0 * delta)
 	var t: float = boss["t"]
-	var target := Vector2(FIELD_W * 0.5 + sin(t * 0.55) * 270.0, 190.0)
+	var kind: String = String(boss.get("kind", "liberty"))
+	var sway_freq := 0.72 if kind in ["needle", "prism"] else (0.42 if kind in ["fortress", "pentagon"] else 0.55)
+	var sway_amp := 310.0 if kind == "needle" else (220.0 if kind == "fortress" else 270.0)
+	var target := Vector2(FIELD_W * 0.5 + sin(t * sway_freq) * sway_amp, 190.0 + sin(t * 1.1) * 18.0)
 	if t < 3.0:
 		boss["pos"] = boss["pos"].move_toward(target, 190.0 * delta)
 		return
-	boss["pos"] = boss["pos"].move_toward(target, 200.0 * delta)
-	var frac: float = boss["hp"] / BOSS_HP
+	boss["pos"] = boss["pos"].move_toward(target, 210.0 * delta)
+	var frac: float = boss["hp"] / maxf(1.0, float(boss.get("max_hp", boss_max_hp)))
 	var p: Vector2 = boss["pos"]
 	# im mocniej uszkodzony, tym bardziej dymi i iskrzy
 	boss["smoke_t"] -= delta
@@ -882,26 +892,76 @@ func _update_boss(delta: float) -> void:
 		_sparks(spot, Color(1.4, 0.8, 0.3), 3, 170.0)
 		if frac < 0.33 and randf() < 0.12:
 			_blast_pop(spot, Color(1.4, 0.5, 0.3))
-	var torch := p + Vector2(112, -96)
 	boss["a1"] -= delta
 	boss["a2"] -= delta
 	boss["a3"] -= delta
-	# faza 1: wachlarze z korony
-	if boss["a1"] <= 0.0:
-		boss["a1"] = 1.05 if frac > 0.33 else 0.85
-		_fan(p + Vector2(0, 40), 5 if frac > 0.33 else 7, 0.2, 310.0)
-		Audio.play("enemy_shot", 0.1)
-	# faza 2: spirala z pochodni
-	if frac < 0.66 and boss["a2"] <= 0.0:
-		boss["a2"] = 0.1
-		boss["spin"] += 0.37
-		_shoot(torch, Vector2.from_angle(boss["spin"]), 235.0, Color(1.4, 0.8, 0.25))
-	# faza 3: lasery na pozycję gracza i pierścienie
-	if frac < 0.33 and boss["a3"] <= 0.0:
-		boss["a3"] = 2.8
-		lasers.append({"axis": "v", "at": player.x, "t": 0.0})
-		_ring(p, 14, boss["spin"], 200.0)
-		Audio.play("warning", 0.0)
+	match kind:
+		"fortress", "pentagon":
+			# ciężki ostrzał z podwójnych baterii + pierścienie obronne + krzyżowe lasery
+			if boss["a1"] <= 0.0:
+				boss["a1"] = 0.95 if frac > 0.33 else 0.72
+				_fan(p + Vector2(-72, 36), 4 if frac > 0.33 else 6, 0.22, 320.0)
+				_fan(p + Vector2(72, 36), 4 if frac > 0.33 else 6, 0.22, 320.0)
+				Audio.play("enemy_shot", 0.1)
+			if frac < 0.66 and boss["a2"] <= 0.0:
+				boss["a2"] = 0.55 if kind == "fortress" else 0.42
+				boss["spin"] += 0.45
+				_ring(p, 10 if kind == "fortress" else 15, boss["spin"], 230.0)
+			if frac < 0.33 and boss["a3"] <= 0.0:
+				boss["a3"] = 2.4
+				lasers.append({"axis": "v", "at": player.x, "t": 0.0})
+				lasers.append({"axis": "h", "at": clampf(player.y, 260.0, field_h - 80.0), "t": 0.0})
+				Audio.play("warning", 0.0)
+		"needle", "prism":
+			# szybkie precyzyjne serie + podwójna spirala + pionowe wiązki laserowe
+			if boss["a1"] <= 0.0:
+				boss["a1"] = 0.78 if frac > 0.33 else 0.58
+				_fan(p + Vector2(0, 46), 6 if frac > 0.33 else 8, 0.16, 360.0)
+				Audio.play("enemy_shot", 0.1)
+			if frac < 0.66 and boss["a2"] <= 0.0:
+				boss["a2"] = 0.08
+				boss["spin"] += 0.52
+				_shoot(p + Vector2(-58, 10), Vector2.from_angle(boss["spin"]), 260.0, Color(0.4, 1.3, 1.5))
+				_shoot(p + Vector2(58, 10), Vector2.from_angle(-boss["spin"] + PI), 260.0, Color(1.4, 0.4, 1.2))
+			if frac < 0.33 and boss["a3"] <= 0.0:
+				boss["a3"] = 2.5
+				lasers.append({"axis": "v", "at": clampf(player.x - 90.0, 60.0, FIELD_W - 60.0), "t": 0.0})
+				lasers.append({"axis": "v", "at": clampf(player.x + 90.0, 60.0, FIELD_W - 60.0), "t": 0.0})
+				Audio.play("warning", 0.0)
+		"capitol":
+			# kopuła stolicy: gęste wachlarze, potrójna spirala i salwy laserowe
+			if boss["a1"] <= 0.0:
+				boss["a1"] = 0.85 if frac > 0.33 else 0.65
+				_fan(p + Vector2(0, 42), 7 if frac > 0.33 else 9, 0.19, 330.0)
+				Audio.play("enemy_shot", 0.1)
+			if frac < 0.66 and boss["a2"] <= 0.0:
+				boss["a2"] = 0.09
+				boss["spin"] += 0.41
+				for k in 3:
+					_shoot(p + Vector2(0, -20), Vector2.from_angle(boss["spin"] + k * TAU / 3.0), 245.0, Color(1.5, 0.9, 0.35))
+			if frac < 0.33 and boss["a3"] <= 0.0:
+				boss["a3"] = 2.3
+				lasers.append({"axis": "v", "at": player.x, "t": 0.0})
+				_ring(p, 16, boss["spin"], 220.0)
+				Audio.play("warning", 0.0)
+		_:
+			var torch := p + Vector2(112, -96)
+			# faza 1: wachlarze z korony
+			if boss["a1"] <= 0.0:
+				boss["a1"] = 1.05 if frac > 0.33 else 0.85
+				_fan(p + Vector2(0, 40), 5 if frac > 0.33 else 7, 0.2, 310.0)
+				Audio.play("enemy_shot", 0.1)
+			# faza 2: spirala z pochodni
+			if frac < 0.66 and boss["a2"] <= 0.0:
+				boss["a2"] = 0.1
+				boss["spin"] += 0.37
+				_shoot(torch, Vector2.from_angle(boss["spin"]), 235.0, Color(1.4, 0.8, 0.25))
+			# faza 3: lasery na pozycję gracza i pierścienie
+			if frac < 0.33 and boss["a3"] <= 0.0:
+				boss["a3"] = 2.8
+				lasers.append({"axis": "v", "at": player.x, "t": 0.0})
+				_ring(p, 14, boss["spin"], 200.0)
+				Audio.play("warning", 0.0)
 
 
 # =====================================================================
@@ -1241,15 +1301,19 @@ func _draw_enemy(e: Dictionary) -> void:
 			draw_rect(Rect2(p + Vector2(-60, -74), Vector2(120 * frac, 6)), Color(1.3, 0.3, 0.4))
 
 
-## Boss Nowego Jorku: mechaniczna głowa Statuy Wolności z koroną i pochodnią.
+## Boss metropolii lub kompleksu federalnego: warianty sylwetki zależne od boss_kind.
 func _draw_boss() -> void:
 	var p: Vector2 = boss["pos"] + Vector2(randf_range(-1, 1), randf_range(-1, 1)) * boss["recoil"]
 	var t: float = boss["t"]
 	var hit: bool = boss["flash"] > 0.0
+	var kind: String = String(boss.get("kind", "liberty"))
+	var core_a := 0.6 + 0.4 * sin(t * 6.0)
+	if kind != "liberty":
+		_draw_boss_variant(p, t, hit, kind, core_a)
+		return
 	var teal := Color(0.3, 1.2, 1.1)
 	var line := Color(1.4, 1.4, 1.4) if hit else teal
 	var fill := Color(0.02, 0.13, 0.13, 0.97)
-	var core_a := 0.6 + 0.4 * sin(t * 6.0)
 	# ramię z pochodnią
 	var hand := p + Vector2(112, -60)
 	draw_line(p + Vector2(62, 20), p + Vector2(100, -8), line, 9.0, true)
@@ -1290,6 +1354,50 @@ func _draw_boss() -> void:
 		draw_circle(p + Vector2(22, -22), 3.0 + core_a * 2.0, Color(1.5, 0.8, 0.35))
 
 
+func _draw_boss_variant(p: Vector2, t: float, hit: bool, kind: String, core_a: float) -> void:
+	var accent := Color(1.35, 0.55, 0.2) if kind in ["fortress", "pentagon"] else (Color(0.35, 1.25, 1.45) if kind in ["needle", "prism"] else Color(1.45, 0.95, 0.35))
+	var line := Color(1.4, 1.4, 1.4) if hit else accent
+	var fill := Color(0.08, 0.04, 0.12, 0.97)
+	# moduły korony/tarcz dookoła rdzenia
+	for k in CROWN_RAYS:
+		if not boss["rays"][k]:
+			continue
+		var a := -PI * 0.5 + (k - 3) * 0.42 + (t * 0.6 if kind in ["prism", "pentagon"] else 0.0)
+		var base := p + Vector2.from_angle(a) * 62.0
+		var tip := p + Vector2.from_angle(a) * 98.0
+		var n := Vector2.from_angle(a).orthogonal() * 11.0
+		_sil([base - n, tip, base + n], fill, line, 2.0)
+	match kind:
+		"pentagon":
+			var outer: Array = []
+			var inner: Array = []
+			for k in 5:
+				var a := -PI * 0.5 + k * TAU / 5.0 + sin(t * 0.8) * 0.08
+				outer.append(p + Vector2.from_angle(a) * 92.0)
+				inner.append(p + Vector2.from_angle(a) * 48.0)
+			_sil(outer, fill, line, 3.0)
+			_sil(inner, Color(0.16, 0.03, 0.06, 0.95), Color(1.5, 0.3, 0.35), 2.2)
+		"capitol":
+			_sil([p + Vector2(-115, 72), p + Vector2(-95, 16), p + Vector2(95, 16), p + Vector2(115, 72)], fill, line, 3.0)
+			_sil([p + Vector2(-68, 16), p + Vector2(-46, -54), p + Vector2(0, -86), p + Vector2(46, -54), p + Vector2(68, 16)], fill, line, 3.0)
+			for k in range(-3, 4):
+				draw_line(p + Vector2(k * 24.0, 18), p + Vector2(k * 24.0, 68), line, 2.0)
+		"needle", "prism":
+			_sil([p + Vector2(0, -96), p + Vector2(88, 0), p + Vector2(46, 86), p + Vector2(-46, 86), p + Vector2(-88, 0)], fill, line, 3.0)
+			draw_line(p + Vector2(-88, 0), p + Vector2(88, 0), Color(1.4, 0.4, 1.2, 0.85), 2.5)
+			draw_line(p + Vector2(0, -96), p + Vector2(0, 86), Color(0.4, 1.3, 1.5, 0.85), 2.5)
+		_:
+			# ciężka forteca pancerna
+			_sil([p + Vector2(-112, -48), p + Vector2(112, -48), p + Vector2(128, 34), p + Vector2(76, 88), p + Vector2(-76, 88), p + Vector2(-128, 34)], fill, line, 3.0)
+			draw_rect(Rect2(p + Vector2(-86, 26), Vector2(32, 46)), fill)
+			draw_rect(Rect2(p + Vector2(54, 26), Vector2(32, 46)), fill)
+			draw_rect(Rect2(p + Vector2(-86, 26), Vector2(32, 46)), line, false, 2.0)
+			draw_rect(Rect2(p + Vector2(54, 26), Vector2(32, 46)), line, false, 2.0)
+	draw_circle(p, 24.0, Color(0.05, 0.02, 0.08, 0.95))
+	draw_arc(p, 24.0, 0.0, TAU, 28, Color(1.5, 0.25, 0.45, core_a), 3.0, true)
+	draw_circle(p, 10.0 + core_a * 4.0, Color(1.5, 0.85, 0.35, core_a))
+
+
 func _draw_side(vs: Vector2) -> void:
 	var c := Color(0.01, 0.0, 0.03, 0.82)
 	draw_rect(Rect2(0, 0, field_x, vs.y), c)
@@ -1324,11 +1432,12 @@ func _draw_side(vs: Vector2) -> void:
 		var w := FIELD_W - 160.0
 		var bb := Rect2(field_x + 80.0, 18.0, w, 14.0)
 		draw_rect(bb, Color(0, 0, 0, 0.85))
-		draw_rect(Rect2(bb.position, Vector2(w * clampf(boss["hp"] / BOSS_HP, 0.0, 1.0), bb.size.y)), Color(1.3, 0.25, 0.6))
+		var bhp_max := maxf(1.0, float(boss.get("max_hp", boss_max_hp)))
+		draw_rect(Rect2(bb.position, Vector2(w * clampf(boss["hp"] / bhp_max, 0.0, 1.0), bb.size.y)), Color(1.3, 0.25, 0.6))
 		draw_rect(bb, Style.PINK, false, 1.5)
 		for f in [0.33, 0.66]:
 			draw_line(bb.position + Vector2(w * f, 0), bb.position + Vector2(w * f, bb.size.y), Color(0, 0, 0, 0.9), 2.0)
-		draw_string(pf, Vector2(field_x + 80.0, 56), "STRAŻNICZKA WOLNOŚCI", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Style.PINK)
+		draw_string(pf, Vector2(field_x + 80.0, 56), boss_title, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Style.PINK)
 
 
 func _center_text(vs: Vector2, y: float, s: String, fsize: int, c: Color) -> void:
@@ -1406,9 +1515,10 @@ func _draw_messages(vs: Vector2) -> void:
 			_draw_tutorial(vs)
 		"warning":
 			if int(time * 5.0) % 2 == 0:
-				_center_text(vs, vs.y * 0.42, "UWAGA: STRAŻNICZKA WOLNOŚCI", 40, Color(1.4, 0.25, 0.25))
+				_center_text(vs, vs.y * 0.42, "UWAGA: " + boss_title, 40, Color(1.4, 0.25, 0.25))
 		"win":
-			_center_text(vs, vs.y * 0.42, "STRAŻNICZKA POKONANA", 48, Style.GOLD)
+			var win_msg := "STRAŻNICZKA POKONANA" if sector == 2 else (boss_title + " — ZNISZCZONY")
+			_center_text(vs, vs.y * 0.42, win_msg, 48, Style.GOLD)
 			_center_text(vs, vs.y * 0.42 + 44.0, "+1 PUNKT CHWAŁY IMPERIUM" if reward else "NAGRODA ZOSTAŁA JUŻ ODEBRANA", 24, Style.PINK)
 		"lose":
 			_center_text(vs, vs.y * 0.42, "STATEK ZNISZCZONY", 48, Color(1.4, 0.25, 0.25))

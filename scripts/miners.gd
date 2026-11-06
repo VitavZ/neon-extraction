@@ -20,6 +20,7 @@ var ship: Node2D
 var mothership: Node2D
 var fx: Node2D
 var miners: Array = []        # {pos, vel, rot, state, target, cargo, t}
+var recalled := false
 var time := 0.0
 
 
@@ -64,12 +65,27 @@ func _fresh() -> Dictionary:
 
 ## Po dokowaniu zniszczone statki wracają z hangaru, a uszkodzone są naprawione.
 func revive() -> void:
+	recalled = false
 	for k in miners.size():
 		if miners[k]["dead"]:
 			miners[k] = _fresh()
 		else:
 			miners[k]["max_hp"] = GameState.stat("miner_hp")
 			miners[k]["hp"] = miners[k]["max_hp"]
+
+
+func toggle_recall() -> bool:
+	recalled = not recalled
+	if recalled:
+		for m in miners:
+			if not m["dead"] and m["state"] != "idle":
+				m["state"] = "return"
+				m["target"] = -1
+	else:
+		for m in miners:
+			if not m["dead"] and m["state"] == "idle":
+				m["state"] = "seek"
+	return recalled
 
 
 ## Sprawne statki (cele dla wrogów).
@@ -98,6 +114,11 @@ func _update(m: Dictionary, res: String, taken: Dictionary, delta: float) -> voi
 	var speed := GameState.stat("miner_speed")
 	var mother: Vector2 = mothership.position
 	var goal: Vector2 = mother
+	var hold_back: bool = recalled or (mothership != null and mothership.siege)
+	if hold_back and m["state"] in ["seek", "fly", "mine"]:
+		taken.erase(m["target"])
+		m["target"] = -1
+		m["state"] = "return"
 	match m["state"]:
 		"seek":
 			taken.erase(m["target"])
@@ -110,9 +131,10 @@ func _update(m: Dictionary, res: String, taken: Dictionary, delta: float) -> voi
 				m["state"] = "fly"
 		"idle":
 			goal = mother + Vector2.from_angle(time * 0.6 + m["rot"]) * 160.0
-			m["t"] -= delta
-			if m["t"] <= 0.0:
-				m["state"] = "return" if m["cargo"] > 0 else "seek"
+			if not hold_back:
+				m["t"] -= delta
+				if m["t"] <= 0.0:
+					m["state"] = "return" if m["cargo"] > 0 else "seek"
 		"fly", "mine":
 			var tgt: int = m["target"]
 			if not world.miner_match(tgt, res):
@@ -137,7 +159,8 @@ func _update(m: Dictionary, res: String, taken: Dictionary, delta: float) -> voi
 		"return":
 			if m["pos"].distance_to(mother) < 150.0:
 				_deliver(m, res)
-				m["state"] = "seek"
+				m["state"] = "idle" if hold_back else "seek"
+				m["t"] = 1.0
 	# lot: przy celu zwalnia i zawisa obok kafelka
 	var to: Vector2 = goal - m["pos"]
 	var stop := HOVER if m["state"] in ["fly", "mine"] else 0.0
@@ -177,13 +200,18 @@ func _deliver(m: Dictionary, res: String) -> void:
 func _draw() -> void:
 	if ship == null or ship.docked:
 		return
+	var inv := get_viewport().get_canvas_transform().affine_inverse()
+	var tl: Vector2 = inv * Vector2.ZERO
+	var cam_rect := Rect2(tl, (inv * get_viewport_rect().size) - tl).grow(120.0)
 	for k in miners.size():
 		var m: Dictionary = miners[k]
 		if m["dead"]:
 			continue
+		var p: Vector2 = m["pos"]
+		if not cam_rect.has_point(p):
+			continue
 		var res := String(GameState.miner_res[k])
 		var rc: Color = GameState.RES_COLORS[res]
-		var p: Vector2 = m["pos"]
 		if m["state"] == "mine" and m["target"] >= 0:
 			var tp: Vector2 = world.idx_center(m["target"])
 			var flick := 0.8 + 0.2 * sin(time * 40.0 + k)

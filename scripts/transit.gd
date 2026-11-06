@@ -158,7 +158,10 @@ func _jump_home(s: Dictionary) -> void:
 func _draw() -> void:
 	if ship == null or ship.docked:
 		return
+	var view: Rect2 = ship.world._cam_rect(260.0) if ship.world else Rect2(-1e7, -1e7, 2e7, 2e7)
 	for s in ships:
+		if not view.has_point(s["pos"]) and s["state"] != "dock":
+			continue
 		var xf := Transform2D(s["rot"], s["pos"])
 		draw_arc(s["pos"], 28.0, 0.0, TAU, 28, Color(1.3, 0.9, 0.3, 0.3), 1.5, true)
 		# szeroki, kanciasty frachtowiec z kontenerem pośrodku

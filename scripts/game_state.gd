@@ -596,6 +596,8 @@ func _quest_met(q: Dictionary) -> bool:
 			return metros_done.has(str(q["sector"]))
 		"rebuild":
 			return metro_rebuilt(int(q["sector"])) >= float(q["fraction"]) - 0.0001
+		"federal":
+			return metros_done.has("washington") and metros_done.has("pentagon")
 		"collect":
 			return int(collected.get(q["res"], 0)) >= int(q["target"])
 	return false
@@ -637,6 +639,8 @@ func quest_progress(q: Dictionary) -> Array:
 		"metro":
 			var key := str(q["sector"])
 			return [1 if metros_done.has(key) else 0, 1]
+		"federal":
+			return [(1 if metros_done.has("washington") else 0) + (1 if metros_done.has("pentagon") else 0), 2]
 		"rebuild":
 			# w procentach: [ile odbudowano, ile trzeba]
 			var goal := int(round(float(q["fraction"]) * 100.0))
@@ -676,8 +680,20 @@ func empire_unlocked() -> bool:
 	return metros_done.has(str(Sectors.START)) and boss_state(Sectors.START) == "beaten"
 
 
+func boss_key(s: int) -> String:
+	if s >= 100 and s - 100 < Sectors.LANDMARKS.size():
+		return String(Sectors.LANDMARKS[s - 100]["id"])
+	return str(s)
+
+
 func boss_state(s: int) -> String:
-	return String(boss_states.get(str(s), ""))
+	return String(boss_states.get(boss_key(s), ""))
+
+
+func target_name(s: int) -> String:
+	if s >= 100 and s - 100 < Sectors.LANDMARKS.size():
+		return String(Sectors.LANDMARKS[s - 100]["name"])
+	return city_name(s)
 
 
 ## Klucze sektorów ze starej siatki 3x2 na nową 3x3 (inne klucze, np. "washington", bez zmian).
@@ -858,6 +874,21 @@ func buy(u: Dictionary) -> bool:
 	recalc_stats()
 	bank_changed.emit()
 	return true
+
+
+## Kupuje tyle poziomów ulepszenia naraz, na ile wystarcza surowców. Zwraca liczbę kupionych poziomów.
+func buy_max(u: Dictionary) -> int:
+	var bought := 0
+	while can_buy(u):
+		var cost := cost_of(u)
+		for k in cost:
+			bank[k] = int(bank.get(k, 0)) - int(cost[k])
+		levels[u["id"]] = get_level(u["id"]) + 1
+		bought += 1
+	if bought > 0:
+		recalc_stats()
+		bank_changed.emit()
+	return bought
 
 
 func format_stat(key: String, value: float, signed := false) -> String:

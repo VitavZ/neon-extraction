@@ -513,6 +513,8 @@ func _draw_city_labels(view: Rect2) -> void:
 		var p := landmark_pos(k)
 		if not view.grow(600.0).has_point(p):
 			continue
+		if GameState.boss_state(100 + k) != "":
+			_draw_boss_portal(p)
 		var txt: String = Sectors.LANDMARKS[k]["name"]
 		var w := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 48).x
 		var at := p + Vector2(-w * 0.5, 16.0)

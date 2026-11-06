@@ -220,7 +220,7 @@ func _gui_input(event: InputEvent) -> void:
 		elif _center_view_rect().has_point(mp):
 			reset_view()
 		elif not hovered.is_empty():
-			if GameState.buy(hovered):
+			if (GameState.buy_max(hovered) > 0 if event.shift_pressed else GameState.buy(hovered)):
 				flash[hovered["id"]] = 0.6
 				Audio.play("buy", 0.0)
 			else:

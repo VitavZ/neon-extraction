@@ -27,26 +27,26 @@ const OLD_LAT_MIN := 24.5
 const START := 2   # gra zaczyna się w Appalachach: blisko są wszystkie surowce podstawowe
 
 const LIST := [
-	{"name": "PÓŁNOCNY ZACHÓD", "city": "SEATTLE", "destroyed": "SEATTLE ZNISZCZONE", "city_lonlat": Vector2(-122.3, 47.6), "dock_lonlat": Vector2(-116.5, 45.5), "city_r": 8.5},
-	{"name": "ŚRODKOWY ZACHÓD", "city": "CHICAGO", "destroyed": "CHICAGO ZNISZCZONE", "city_lonlat": Vector2(-87.9, 41.9), "dock_lonlat": Vector2(-93.0, 42.5), "city_r": 9.5},
-	{"name": "PÓŁNOCNY WSCHÓD", "city": "NOWY JORK", "destroyed": "NOWY JORK ZNISZCZONY", "boss": true, "boss_music": "res://audio/music/liberty_down.mp3", "city_lonlat": Vector2(-74.2, 40.8), "dock_lonlat": Vector2(-79.5, 41.2), "city_r": 10.0},
-	{"name": "ZACHÓD", "city": "LOS ANGELES", "destroyed": "LOS ANGELES ZNISZCZONE", "city_lonlat": Vector2(-118.1, 34.1), "dock_lonlat": Vector2(-113.0, 36.0), "city_r": 9.5},
-	{"name": "WIELKIE RÓWNINY", "city": "DALLAS", "destroyed": "DALLAS ZNISZCZONE", "city_lonlat": Vector2(-96.8, 32.8), "dock_lonlat": Vector2(-101.0, 33.0), "city_r": 9.0},
+	{"name": "PÓŁNOCNY ZACHÓD", "city": "SEATTLE", "destroyed": "SEATTLE ZNISZCZONE", "boss": true, "boss_name": "IGLICA PACYFIKU", "boss_kind": "needle", "boss_music": "res://audio/music/neon_horizon.mp3", "city_lonlat": Vector2(-122.3, 47.6), "dock_lonlat": Vector2(-116.5, 45.5), "city_r": 8.5},
+	{"name": "ŚRODKOWY ZACHÓD", "city": "CHICAGO", "destroyed": "CHICAGO ZNISZCZONE", "boss": true, "boss_name": "ŻELAZNY SYNDYKAT", "boss_kind": "fortress", "boss_music": "res://audio/music/neon_heist.mp3", "city_lonlat": Vector2(-87.9, 41.9), "dock_lonlat": Vector2(-93.0, 42.5), "city_r": 9.5},
+	{"name": "PÓŁNOCNY WSCHÓD", "city": "NOWY JORK", "destroyed": "NOWY JORK ZNISZCZONY", "boss": true, "boss_name": "STRAŻNICZKA WOLNOŚCI", "boss_kind": "liberty", "boss_music": "res://audio/music/liberty_down.mp3", "city_lonlat": Vector2(-74.2, 40.8), "dock_lonlat": Vector2(-79.5, 41.2), "city_r": 10.0},
+	{"name": "ZACHÓD", "city": "LOS ANGELES", "destroyed": "LOS ANGELES ZNISZCZONE", "boss": true, "boss_name": "PRYZMAT HOLLYWOOD", "boss_kind": "prism", "boss_music": "res://audio/music/neon_wave.mp3", "city_lonlat": Vector2(-118.1, 34.1), "dock_lonlat": Vector2(-113.0, 36.0), "city_r": 9.5},
+	{"name": "WIELKIE RÓWNINY", "city": "DALLAS", "destroyed": "DALLAS ZNISZCZONE", "boss": true, "boss_name": "PANCERNIK TEKSASU", "boss_kind": "fortress", "boss_music": "res://audio/music/neon_pursuit.mp3", "city_lonlat": Vector2(-96.8, 32.8), "dock_lonlat": Vector2(-101.0, 33.0), "city_r": 9.0},
 	{"name": "DYSTRYKT FEDERALNY", "city": "", "sub": "WASZYNGTON  •  PENTAGON", "federal": true, "danger": 60.0,
 		"city_lonlat": Vector2(-77.3, 38.7), "dock_lonlat": Vector2(-81.5, 37.6), "city_r": 0.0},
-	{"name": "SONORA", "city": "HERMOSILLO", "destroyed": "HERMOSILLO ZNISZCZONE", "city_lonlat": Vector2(-110.95, 29.08), "dock_lonlat": Vector2(-108.6, 27.6), "city_r": 7.0},
-	{"name": "WYBRZEŻE ZATOKI", "city": "HOUSTON", "destroyed": "HOUSTON ZNISZCZONY", "city_lonlat": Vector2(-95.4, 29.8), "dock_lonlat": Vector2(-99.6, 29.0), "city_r": 9.0},
-	{"name": "POŁUDNIOWY WSCHÓD", "city": "MIAMI", "destroyed": "MIAMI ZNISZCZONE", "city_lonlat": Vector2(-80.4, 25.9), "dock_lonlat": Vector2(-82.2, 29.4), "city_r": 7.0},
+	{"name": "SONORA", "city": "HERMOSILLO", "destroyed": "HERMOSILLO ZNISZCZONE", "boss": true, "boss_name": "SKORPION SONORY", "boss_kind": "needle", "boss_music": "res://audio/music/neon_pursuit.mp3", "city_lonlat": Vector2(-110.95, 29.08), "dock_lonlat": Vector2(-108.6, 27.6), "city_r": 7.0},
+	{"name": "WYBRZEŻE ZATOKI", "city": "HOUSTON", "destroyed": "HOUSTON ZNISZCZONY", "boss": true, "boss_name": "ORBITER APOLLO", "boss_kind": "prism", "boss_music": "res://audio/music/neon_laser.mp3", "city_lonlat": Vector2(-95.4, 29.8), "dock_lonlat": Vector2(-99.6, 29.0), "city_r": 9.0},
+	{"name": "POŁUDNIOWY WSCHÓD", "city": "MIAMI", "destroyed": "MIAMI ZNISZCZONE", "boss": true, "boss_name": "LEWIATAN TROPIKÓW", "boss_kind": "liberty", "boss_music": "res://audio/music/neon_wave.mp3", "city_lonlat": Vector2(-80.4, 25.9), "dock_lonlat": Vector2(-82.2, 29.4), "city_r": 7.0},
 ]
 ## Stara numeracja sektorów (siatka 3x2) -> nowa (3x3). Do przeniesienia zapisów.
 const OLD_SECTOR := {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 8}
 
 
-## Obiekty specjalne: super strzeżone, z własnym bossem (na razie bez walki, "boss" pusty).
+## Obiekty specjalne: super strzeżone, z własnym bossem.
 ## r - promień w kafelkach; shape - kształt kompleksu.
 const LANDMARKS := [
-	{"id": "washington", "name": "WASZYNGTON", "destroyed": "WASZYNGTON ZNISZCZONY", "lonlat": Vector2(-77.04, 38.9), "r": 3.3, "shape": "capitol", "boss": ""},
-	{"id": "pentagon", "name": "PENTAGON", "destroyed": "PENTAGON ZNISZCZONY", "lonlat": Vector2(-77.6, 38.45), "r": 3.4, "shape": "pentagon", "boss": ""},
+	{"id": "washington", "name": "WASZYNGTON", "destroyed": "WASZYNGTON ZNISZCZONY", "lonlat": Vector2(-77.04, 38.9), "r": 3.3, "shape": "capitol", "boss": "washington", "boss_name": "KOPUŁA KAPITOLU", "boss_kind": "capitol", "boss_music": "res://audio/music/liberty_down.mp3"},
+	{"id": "pentagon", "name": "PENTAGON", "destroyed": "PENTAGON ZNISZCZONY", "lonlat": Vector2(-77.6, 38.45), "r": 3.4, "shape": "pentagon", "boss": "pentagon", "boss_name": "RDZEŃ PENTAGONU", "boss_kind": "pentagon", "boss_music": "res://audio/music/neon_laser.mp3"},
 ]
 ## Pas obrony wokół obiektu specjalnego (kafelki poza jego promieniem).
 const LANDMARK_GUARD := 7.0
@@ -88,3 +88,18 @@ static func sector_rect(s: int) -> Rect2i:
 ## Odległość sektorów w krokach siatki (także koszt przeniesienia Matki).
 static func steps(a: int, b: int) -> int:
 	return absi(a % COLS - b % COLS) + absi(a / COLS - b / COLS)
+
+
+## Dane bossa dla sektora (0..8) albo obiektu specjalnego (100 + indeks w LANDMARKS).
+static func boss_info(target: int) -> Dictionary:
+	if target >= 100 and target - 100 < LANDMARKS.size():
+		return LANDMARKS[target - 100]
+	if target >= 0 and target < LIST.size():
+		return LIST[target]
+	return {}
+
+
+static func boss_name(target: int) -> String:
+	var info := boss_info(target)
+	return String(info.get("boss_name", "STRAŻNICZKA WOLNOŚCI"))
+

@@ -21,7 +21,7 @@ func _armory_input(event: InputEvent) -> void:
 		elif not hovered.is_empty():
 			if tab == "lab":
 				Audio.play("ui_click" if GameState.start_research(hovered) else "error", 0.0)
-			elif GameState.buy(hovered):
+			elif (GameState.buy_max(hovered) > 0 if event.shift_pressed else GameState.buy(hovered)):
 				Audio.play("buy", 0.0)
 				flash[hovered["id"]] = 0.6
 			else:

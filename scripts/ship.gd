@@ -233,6 +233,7 @@ func _process(delta: float) -> void:
 		if stop != Vector2.INF:
 			beam_target = stop
 			beam_hit = true
+			siphon(GameState.stat("fuel_siphon") * delta * 2.5, GameState.stat("hull_siphon") * delta * 2.0)
 		else:
 			beam_hit = world.laser_hit(beam_target, dmg, splash_points) >= 0
 	if rebuilding:

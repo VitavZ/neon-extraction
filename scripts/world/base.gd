@@ -472,11 +472,14 @@ func _metro_tile_gone(i: int) -> void:
 	metro_tile_destroyed.emit(s)
 
 
-## Sektor, którego punkt bossa jest przy pozycji (lub -1).
+## Sektor (0..8) albo obiekt specjalny (100 + k), którego punkt bossa jest przy pozycji (lub -1).
 func boss_portal_at(p: Vector2) -> int:
 	for s in Sectors.LIST.size():
 		if GameState.boss_state(s) != "" and p.distance_to(city_pos(s)) < BOSS_PORTAL_RADIUS:
 			return s
+	for k in landmark_cells.size():
+		if GameState.boss_state(100 + k) != "" and p.distance_to(landmark_pos(k)) < BOSS_PORTAL_RADIUS:
+			return 100 + k
 	return -1
 
 

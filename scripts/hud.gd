@@ -12,7 +12,9 @@ var world: Node2D
 var mothership: Node2D
 var weapons: Node2D
 var wingmen: Node2D
+var miners: Node2D
 var transit: Node2D
+var map_open := false
 var font: Font
 var font_b: Font
 var messages: Array = []   # {text, life, color}
@@ -753,6 +755,28 @@ func _draw_slow() -> void:
 				var bp: Vector2 = mp + (world.city_pos(s) - origin) * k
 				if map_rect.has_point(bp):
 					cv.draw_arc(bp, 7.0 + dot_a * 2.0, 0.0, TAU, 16, Style.PINK, 2.0, true)
+		for lk in world.landmark_cells.size():
+			if GameState.boss_state(100 + lk) != "":
+				var lbp: Vector2 = mp + (world.landmark_pos(lk) - origin) * k
+				if map_rect.has_point(lbp):
+					cv.draw_arc(lbp, 6.0 + dot_a * 2.0, 0.0, TAU, 16, Style.PINK, 2.0, true)
+		# znaczniki sojuszników na minimapie: wydobywcze (złote), myśliwce (błękitne), tranzyt (jasnozłote)
+		if miners:
+			for m in miners.miners:
+				if not m.get("dead", false):
+					var mp_ally: Vector2 = mp + (m["pos"] - origin) * k
+					if map_rect.has_point(mp_ally):
+						cv.draw_rect(Rect2(mp_ally - Vector2(2.0, 2.0), Vector2(4.0, 4.0)), Color(1.0, 0.8, 0.25, 0.9))
+		if wingmen and wingmen.called:
+			for w in wingmen.wings:
+				var wp_ally: Vector2 = mp + (w["pos"] - origin) * k
+				if map_rect.has_point(wp_ally):
+					cv.draw_circle(wp_ally, 2.5, Color(0.35, 0.95, 1.0, 0.95))
+		if transit:
+			for tr in transit.ships:
+				var tp_ally: Vector2 = mp + (tr["pos"] - origin) * k
+				if map_rect.has_point(tp_ally):
+					cv.draw_circle(tp_ally, 2.8, Color(1.0, 0.95, 0.5, 0.95))
 		# granice sektorów na minimapie w czasie przesuwania
 		for bx in range(1, Sectors.COLS if custom_view.is_empty() else 1):
 			var gx: float = mp.x + (bx * Sectors.SIZE - view_origin.x) * ms / Sectors.SIZE
@@ -772,6 +796,8 @@ func _draw_slow() -> void:
 		if GameState.stat("rocket_unlocked") > 0.0 and weapons:
 			extra_rows += 1
 		if GameState.stat("drone_count") > 0.0:
+			extra_rows += 1
+		if GameState.stat("miner_count") > 0.0 and miners:
 			extra_rows += 1
 		if GameState.stat("wing_count") > 0.0:
 			extra_rows += 1
@@ -847,6 +873,10 @@ func _draw_slow() -> void:
 		if GameState.stat("drone_count") > 0.0:
 			_t(Vector2(mp.x, ly), "DRONY x%d" % int(GameState.stat("drone_count")), 11, Color(0.4, 1.0, 0.9), true)
 			ly += 16
+		if GameState.stat("miner_count") > 0.0 and miners:
+			var ml: String = ("WYDOBYWCZE %d/%d: W BAZIE" if miners.recalled or (mothership and mothership.siege) else "WYDOBYWCZE %d/%d: W PRACY") % [miners.alive().size(), miners.count()]
+			_t(Vector2(mp.x, ly), ml, 11, Style.GOLD, true)
+			ly += 16
 		if GameState.stat("wing_count") > 0.0:
 			var wl: String = "MYŚLIWCE %d/%d: W ESKORCIE" % [wingmen.wings.size(), wingmen.count()] if wingmen and wingmen.called \
 				else GameState.keys_text("MYŚLIWCE %d/%d: WEZWIJ [{wing}]" % [wingmen.ready_count(), wingmen.count()])
@@ -867,12 +897,54 @@ func _draw_slow() -> void:
 			_t(Vector2(mp.x, ly), et, 12, Color(1.0, 0.3, 0.3, a), true)
 
 	# podpowiedź sterowania (u góry, dyskretnie)
-	var help := GameState.keys_text("LPM STRZAŁ • {tool1}/{tool2}/{tool3} NARZĘDZIA • {rocket} RAKIETA • PPM/{thrust} CIĄG • {drift} DRIFT • {brake} HAMULEC • {stop} STOP •{left}/{right} BOK • KÓŁKO ZOOM • {dock} DOK • {pause} PAUZA • {crt} CRT • {fps} FPS")
+	var help := GameState.keys_text("LPM STRZAŁ • {tool1}/{tool2}/{tool3} NARZĘDZIA • {rocket} RAKIETA • PPM/{thrust} CIĄG • {drift} DRIFT • {brake} HAMULEC • {stop} STOP • {left}/{right} BOK • KÓŁKO ZOOM • M/TAB MAPA • {dock} DOK • {pause} PAUZA")
 	var hw := _tw(help, 11)
 	cv.draw_rect(Rect2(vs.x * 0.5 - hw * 0.5 - 8, 4, hw + 16, 17), Color(0, 0, 0, 0.7))
 	_t(Vector2(vs.x * 0.5 - hw * 0.5, 16), help, 11, Color(0.6, 0.5, 0.75, 0.85))
+	if map_open and custom_view.is_empty():
+		_draw_full_map(vs)
 
 	cv = self
+
+
+func toggle_map() -> void:
+	if not custom_view.is_empty():
+		return
+	map_open = not map_open
+	slow.queue_redraw()
+
+
+## Pełna mapa 3x3 sektorów USA w locie [M / TAB].
+func _draw_full_map(vs: Vector2) -> void:
+	if not world or not world.minimap_tex:
+		return
+	var sz := minf(vs.x, vs.y) * 0.74
+	var mp := (vs - Vector2(sz, sz)) * 0.5
+	var frame := Rect2(mp - Vector2(18, 44), Vector2(sz + 36, sz + 76))
+	cv.draw_rect(Rect2(Vector2.ZERO, vs), Color(0.0, 0.0, 0.03, 0.65))
+	Style.chamfer_panel(cv, frame, Style.PINK, Color(0.02, 0.0, 0.06, 0.96), 16.0)
+	_t(Vector2(mp.x, mp.y - 18), "MAPA TAKTYCZNA USA  —  [M / TAB] ZAMKNIJ", 14, Style.CYAN, true)
+	var map_r := Rect2(mp, Vector2(sz, sz))
+	cv.draw_texture_rect(world.minimap_tex, map_r, false)
+	var world_px := float(Sectors.W * world.T)
+	var k := sz / world_px
+	var cell := sz / 3.0
+	for s in Sectors.LIST.size():
+		var sr := Rect2(mp + Vector2((s % 3) * cell, (s / 3) * cell), Vector2(cell, cell))
+		if not GameState.sector_open(s):
+			cv.draw_rect(sr, Color(0.45, 0.05, 0.08, 0.42))
+		cv.draw_rect(sr, Color(0.4, 0.9, 1.0, 0.35), false, 1.0)
+		_t(sr.position + Vector2(8, 16), String(Sectors.LIST[s]["name"]), 11, Style.CYAN, true)
+		if Sectors.has_city(s):
+			var cpos: Vector2 = mp + world.city_pos(s) * k
+			var cname := "%s (%d%%)" % [GameState.city_name(s), int(world.metro_destroyed_fraction(s) * 100.0)]
+			var col := Style.GOLD if GameState.metros_done.has(str(s)) else Color(1.0, 0.8, 0.98)
+			cv.draw_circle(cpos, 4.0, col)
+			_t(cpos + Vector2(-_tw(cname, 11, true) * 0.5, 16), cname, 11, col, true)
+	var mpos: Vector2 = mp + mothership.global_position * k
+	_mini_mother(mpos)
+	var spos: Vector2 = mp + ship.global_position * k
+	cv.draw_circle(spos, 5.0, Style.GREEN)
 
 const RES_ROW := 21.0
 

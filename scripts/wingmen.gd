@@ -168,7 +168,10 @@ func _draw() -> void:
 		draw_line(tr["a"], tr["b"], Color(1.4, 1.3, 1.0, f), 1.4, true)
 	if not called or ship == null or ship.docked:
 		return
+	var view: Rect2 = world._cam_rect(200.0) if world else Rect2(-1e7, -1e7, 2e7, 2e7)
 	for w in wings:
+		if not view.has_point(w["pos"]):
+			continue
 		var xf := Transform2D(w["rot"], w["pos"])
 		# złoty pierścień: od razu widać, że to sojusznik
 		draw_arc(w["pos"], 22.0, 0.0, TAU, 24, Color(1.3, 0.9, 0.3, 0.3), 1.5, true)
