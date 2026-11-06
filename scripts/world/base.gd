@@ -65,10 +65,6 @@ const MISSILE_TURRET_MIN_DANGER := 25.0
 const MISSILE_RANGE := 720.0
 ## Dodatkowe złoża miedzi: próg szansy na złoże mnożony przez ten współczynnik (nadwyżka to sama miedź).
 const COPPER_BONUS := 1.15
-## Ile najbliższych okręgów zasięgu wieżyczek rysuje się w pełnej jakości (reszta: sama linia).
-const RING_FULL_DETAIL := 6
-## Najwięcej okręgów naraz (najbliższe statkowi); w gęstych miastach dalsze i tak zlewają się w jedno.
-const RING_MAX := 12
 const HEX_UNIT := [Vector2(1, 0), Vector2(0.5, 0.866025), Vector2(-0.5, 0.866025), Vector2(-1, 0), Vector2(-0.5, -0.866025), Vector2(0.5, -0.866025), Vector2(1, 0)]
 const MISSILE_MAX := 6
 const MISSILE_SPEED_MIN := 410.0

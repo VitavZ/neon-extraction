@@ -73,5 +73,5 @@ ale nie może wołać funkcji z części późniejszych (Godot zgłosi „Functi
 - Balans statku/ulepszeń: `upgrades.gd` (effects/cost), `game_state.gd` `BASE_STATS` + `STAT_STEPS`.
 - Wrogowie: stałe w `enemies.gd`, liczba i tempo spawnu w `main.gd` (`MAX_PATROLS`, `MAX_ENEMIES`, `_update_patrols`, `_spawn_wave`).
 - Wieżyczki miast/rakiety: stałe w `world/base.gd` (`TURRET_RANGE`, `MISSILE_*`), logika w `world.gd` `_process` i `world/defense.gd`.
-- Wydajność rysowania mapy: `world/art.gd` + `mesh_painter.gd`; okręgi zasięgu: `world/overlay.gd` (`RING_FULL_DETAIL`, `RING_MAX`).
+- Wydajność rysowania mapy: `world/art.gd` + `mesh_painter.gd`; zasięgi wieżyczek (zlany obrys, pamięć łuków): `world/overlay.gd` `_ring_outline` / `_flush_rings`.
 - Szukanie funkcji: `Grep "^func nazwa"` po `scripts/` zamiast czytania całych plików.
