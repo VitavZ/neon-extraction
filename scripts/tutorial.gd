@@ -39,6 +39,12 @@ var last_rect := Rect2()
 var tick_acc := 0
 var layout: Array = []   # połamany tekst bieżącego okienka (pamięć podręczna _lines)
 var layout_src := ""
+## Własny scenariusz (np. szkolenie w Roswell): inne kroki i warunki, postęp w cstep zamiast GameState.tutorial_step.
+var steps: Array = STEPS
+var custom := false
+var custom_cond: Callable     # func(step: int) -> bool
+var cstep := 0
+var header := "SAMOUCZEK"
 
 ## [tytuł, tekst, cel podświetlenia, ikona]
 const STEPS := [
@@ -75,7 +81,20 @@ func _exit_tree() -> void:
 	get_tree().paused = false
 
 
+func _step() -> int:
+	return cstep if custom else GameState.tutorial_step
+
+
+func _set_step(v: int) -> void:
+	if custom:
+		cstep = v
+	else:
+		GameState.tutorial_step = v
+
+
 func _cond(step: int) -> bool:
+	if custom:
+		return custom_cond.is_valid() and custom_cond.call(step)
 	var docked: bool = ship.docked
 	var mf := maxf(1.0, GameState.stat("max_fuel"))
 	var cfr := float(GameState.cargo_total()) / maxf(1.0, GameState.cargo_cap())
@@ -95,8 +114,8 @@ func _process(delta: float) -> void:
 	_update_shards(delta)
 	if GameState.in_boss or GameState.pause_menu:
 		return
-	var step := GameState.tutorial_step
-	if step >= STEPS.size():
+	var step := _step()
+	if step >= steps.size():
 		showing = false
 		visible = not shards.is_empty() or not sparks.is_empty() or flash_t > 0.0
 		if visible:
@@ -104,11 +123,11 @@ func _process(delta: float) -> void:
 		return
 	visible = true
 	# gracz wyleciał, zanim zamknął (lub zobaczył) powitanie - zostało wykonane
-	if step == 0 and not ship.docked:
+	if not custom and step == 0 and not ship.docked:
 		if showing:
 			_dismiss()
 		else:
-			GameState.tutorial_step += 1
+			_set_step(step + 1)
 		queue_redraw()
 		return
 	# okienko nieaktualne (np. "Ulepszenia" po wylocie) - znika i wróci, gdy warunek znów będzie spełniony
@@ -131,8 +150,8 @@ func _process(delta: float) -> void:
 		press_t = maxf(0.0, press_t - delta)
 	else:
 		# gracz zadokował, zanim zobaczył "Czas wracać" - przejdź od razu do ulepszeń
-		if step == 5 and ship.docked and GameState.sorties >= 1:
-			GameState.tutorial_step = 6
+		if not custom and step == 5 and ship.docked and GameState.sorties >= 1:
+			_set_step(6)
 			step = 6
 		wait -= delta
 		if wait <= 0.0 and not ship.dead and _cond(step):
@@ -164,7 +183,7 @@ func _dismiss() -> void:
 	_shatter()
 	showing = false
 	get_tree().paused = false
-	GameState.tutorial_step += 1
+	_set_step(_step() + 1)
 	wait = 0.8
 
 
@@ -172,7 +191,7 @@ func _skip() -> void:
 	_shatter()
 	showing = false
 	get_tree().paused = false
-	GameState.tutorial_step = DONE
+	_set_step(DONE)
 
 
 func _input(event: InputEvent) -> void:
@@ -261,10 +280,10 @@ func _wrap(words: Array, x0: float, maxw: float) -> Array:
 ## nie przeskakuje między wierszami. Akapit "[klawisze] :: opis" to wiersz listy sterowania:
 ## klawisze w lewej kolumnie, opis wyrównany obok.
 func _lines() -> Array:
-	var step := GameState.tutorial_step
-	if step >= STEPS.size():
+	var step := _step()
+	if step >= steps.size():
 		return []
-	var text: String = GameState.keys_text(STEPS[step][1])
+	var text: String = GameState.keys_text(steps[step][1])
 	if text == layout_src:
 		return layout
 	var maxw := W - 64.0
@@ -298,7 +317,7 @@ func _panel_rect(vs: Vector2, lines: Array) -> Rect2:
 		th += float(l["h"])
 	var h := 104.0 + th + 70.0
 	var pos := Vector2(vs.x * 0.5 - W * 0.5, vs.y - 120 - h)
-	if STEPS[GameState.tutorial_step][2] == "fuel":
+	if steps[_step()][2] == "fuel":
 		pos.y -= 20
 	return Rect2(pos, Vector2(W, h))
 
@@ -392,8 +411,8 @@ func _draw() -> void:
 
 func _draw_popup() -> void:
 	var vs := get_viewport_rect().size
-	var step := GameState.tutorial_step
-	var st: Array = STEPS[step]
+	var step := _step()
+	var st: Array = steps[step]
 	var lines := _lines()
 	var full := _panel_rect(vs, lines)
 	last_rect = full
@@ -462,9 +481,9 @@ func _draw_popup() -> void:
 	draw_polyline(Style.closed(hex), Color(gold.r * 1.25, gold.g * 1.25, gold.b * 1.25), 2.2, true)
 	Style.draw_icon(self, st[3], ic, 14.0, Color(1.3, 1.05, 0.5), 2.0)
 	var tx := r.position.x + 98
-	draw_string(font_b, Vector2(tx, r.position.y + 30), "SAMOUCZEK  %d / %d" % [step + 1, STEPS.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(pink.r, pink.g, pink.b, 0.95))
-	for i in STEPS.size():
-		var dp := Vector2(r.end.x - 34 - (STEPS.size() - 1 - i) * 16, r.position.y + 26)
+	draw_string(font_b, Vector2(tx, r.position.y + 30), "%s  %d / %d" % [header, step + 1, steps.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(pink.r, pink.g, pink.b, 0.95))
+	for i in steps.size():
+		var dp := Vector2(r.end.x - 34 - (steps.size() - 1 - i) * 16, r.position.y + 26)
 		var dq := PackedVector2Array([dp + Vector2(0, -4), dp + Vector2(4, 0), dp + Vector2(0, 4), dp + Vector2(-4, 0)])
 		if i < step:
 			draw_colored_polygon(dq, Color(gold.r, gold.g, gold.b, 0.7))
@@ -530,6 +549,9 @@ func _draw_popup() -> void:
 			draw_polyline(PackedVector2Array([Vector2(cx - 3, obr.get_center().y - 6), Vector2(cx + 3, obr.get_center().y), Vector2(cx - 3, obr.get_center().y + 6)]), Color(gold.r, gold.g, gold.b, aa), 1.8, true)
 	var ok_t := "OK  [ENTER]" if not _typing() else "DALEJ  [ENTER]"
 	draw_string(font_b, Vector2(obr.position.x + 18, obr.position.y + 23), ok_t, HORIZONTAL_ALIGNMENT_LEFT, obr.size.x - 40, 14, Color(1.3, 1.1, 0.6) if hov_ok else ok_c)
+	if custom:
+		skip_rect = Rect2()
+		return
 	var sk_t := "Pomiń samouczek"
 	var sw := font.get_string_size(sk_t, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
 	skip_rect = Rect2(r.position.x + 22, r.end.y - 48, sw + 16, 26)

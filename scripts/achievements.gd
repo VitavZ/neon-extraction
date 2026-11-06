@@ -17,6 +17,7 @@ const DEFS := [
 	{"id": "empire", "name": "W łaskach Imperium", "desc": "Odblokuj zakładkę Imperium na Statku Matce.", "color": Color(1.0, 0.65, 0.2), "hidden": false, "icon": "crown"},
 	{"id": "neonite", "name": "Neonowa gorączka", "desc": "Zbierz pierwsze kryształy neonitu ze złoża.", "color": Color(1.0, 0.3, 1.0), "hidden": false},
 	{"id": "new_york", "name": "Wielkie Jabłko upada", "desc": "Zniszcz całą metropolię Nowego Jorku.", "color": Color(1.0, 0.8, 0.3), "hidden": false},
+	{"id": "training", "name": "Absolwent Roswell", "desc": "Ukończ szkolenie w Roswell (TUTORIAL w menu).", "color": Color(0.45, 1.0, 0.6), "hidden": false, "icon": "shield"},
 	{"id": "menu_wrecker", "name": "Za kulisami", "desc": "Zniszcz 100 kafelków w tle menu głównego.", "color": Color(1.0, 0.35, 0.8), "hidden": true},
 ]
 
@@ -95,6 +96,9 @@ func menu_tile() -> void:
 
 ## Warunki sprawdzane na bieżącym zapisie - zdobywa też osiągnięcia z wcześniejszej gry.
 func check() -> void:
+	# szkolenie startuje z gotowym statkiem - nie może rozdawać osiągnięć za postęp
+	if GameState.training:
+		return
 	if GameState.sorties >= 1:
 		unlock("first_launch")
 	for k in ["armory", "bridge", "lab"]:

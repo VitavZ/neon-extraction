@@ -113,6 +113,9 @@ var ally_turrets: Dictionary = {}   # idx -> {cd, angle} - wieżyczki Imperium w
 var ally_shots: Array = []          # {a, b, life}
 var city_cells: Array = []     # środek metropolii w każdym sektorze
 var city_near := PackedByteArray()   # 1 = kafelek blisko miasta (statki wydobywcze tam nie latają)
+## Szkolenie (scripts/training.gd): kafelki pod tarczą (nie da się ich ranić) i granice obszaru w pikselach.
+var protected: Dictionary = {}
+var play_rect := Rect2()
 var playable := TOTAL                # kafelki poza sektorami oceanu (do procentów zniszczenia)
 var escorts: Node2D                  # myśliwce towarzyszące gracza
 var wingmen: Node2D                  # sojusznicy, w których celują wieżyczki i trafiają pociski
@@ -547,7 +550,9 @@ func _dock_distance(x: int, y: int) -> float:
 func danger(x: int, y: int) -> float:
 	var g := _landmark_guard(x, y) if not landmark_cells.is_empty() else 0.0
 	var s := Sectors.sector_at(x, y)
-	return _dock_distance(x, y) / Sectors.SCALE + 40.0 * Sectors.steps(s, Sectors.START) + float(Sectors.LIST[s].get("danger", 0.0)) + 90.0 * g
+	# w szkoleniu liczy się tylko odległość od Matki (bez premii za daleki sektor)
+	var far := 0.0 if GameState.training else 40.0 * Sectors.steps(s, Sectors.START) + float(Sectors.LIST[s].get("danger", 0.0))
+	return _dock_distance(x, y) / Sectors.SCALE + far + 90.0 * g
 
 
 func danger_at(p: Vector2) -> float:
@@ -710,7 +715,7 @@ func hidden_deposit_name(i: int) -> String:
 
 ## Czy kafelek można niszczyć (powierzchnia albo odsłonięte złoże). Kafelki Imperium są niezniszczalne.
 func is_minable(i: int) -> bool:
-	return i >= 0 and i < TOTAL and (layer[i] == L_SURFACE or layer[i] == L_DEPOSIT)
+	return i >= 0 and i < TOTAL and (layer[i] == L_SURFACE or layer[i] == L_DEPOSIT) and not protected.has(i)
 
 
 ## Odbudowa: zniszczony kafelek staje się kafelkiem Imperium tego samego typu terenu.
@@ -725,6 +730,8 @@ func _is_city(i: int) -> bool:
 ## Koszt odbudowy: tyle, ile kafelek daje bazowo (bez mnożników). Ułamkowe drobne łupy się nie liczą.
 func rebuild_cost(i: int) -> Dictionary:
 	var out := {}
+	if GameState.training:
+		return out   # w szkoleniu odbudowę funduje Imperium
 	var src: Dictionary = TILE_DEFS[surface[i]]["drops"]
 	for k in src:
 		var n := int(src[k])

@@ -18,6 +18,7 @@ const MinersScript = preload("res://scripts/miners.gd")
 const WingmenScript = preload("res://scripts/wingmen.gd")
 const EscortsScript = preload("res://scripts/escorts.gd")
 const TransitScript = preload("res://scripts/transit.gd")
+const TrainingScript = preload("res://scripts/training.gd")
 const MAX_PATROLS := 14
 const BOSS_TRIGGER := 0.75
 const MAX_ENEMIES := 18
@@ -49,6 +50,8 @@ var miners: Node2D
 var wingmen: Node2D
 var escorts: Node2D
 var transit: Node2D
+var tutorial: Control
+var training_ctl: Node2D       # szkolenie w Roswell (tylko gdy GameState.training)
 var patrol_timer := 12.0
 var barrier_msg_cd := 0.0
 var boss_sector := -1
@@ -62,7 +65,8 @@ var siege_timer := randf_range(SIEGE_MIN, SIEGE_MAX)
 
 
 func _ready() -> void:
-	var loaded := GameState.load_game()
+	# szkolenie ma gotowy stan z GameState.start_training() i niczego nie wczytuje
+	var loaded := false if GameState.training else GameState.load_game()
 
 	var env := WorldEnvironment.new()
 	var e := Environment.new()
@@ -204,10 +208,10 @@ func _ready() -> void:
 	var tut_layer := CanvasLayer.new()
 	tut_layer.layer = 20
 	add_child(tut_layer)
-	var tut = TutorialScript.new()
-	tut.ship = ship
-	tut.enemies = enemies
-	tut_layer.add_child(tut)
+	tutorial = TutorialScript.new()
+	tutorial.ship = ship
+	tutorial.enemies = enemies
+	tut_layer.add_child(tutorial)
 	var pause_layer := CanvasLayer.new()
 	pause_layer.layer = 25
 	pause_layer.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -221,8 +225,16 @@ func _ready() -> void:
 	pause_menu.crt = crt
 	pause_menu.env = e
 	upgrade_screen.world = world
+	if GameState.training:
+		training_ctl = TrainingScript.new()
+		training_ctl.main = self
+		add_child(training_ctl)
+		training_ctl.setup()
 
-	dock("Witaj na pokładzie, Kapitanie." if not loaded else "Zapis wczytany. Witaj ponownie.", true)
+	if GameState.training:
+		dock("Szkolenie: Roswell. Powodzenia, Kadecie.", true)
+	else:
+		dock("Witaj na pokładzie, Kapitanie." if not loaded else "Zapis wczytany. Witaj ponownie.", true)
 	Audio.play_game_music()
 
 
@@ -287,7 +299,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			if ship.docked:
 				launch()
 			elif not ship.dead and ship.position.distance_to(mothership.position) < mothership.DOCK_RADIUS:
-				if mothership.wrecked:
+				if training_ctl != null and not training_ctl.can_dock():
+					hud.message("HANGAR ZABLOKOWANY — nie ma odwrotu!", Color(1.0, 0.3, 0.3))
+				elif mothership.wrecked:
 					hud.message("STATEK MATKA W GRUZACH — odbudowa za %ds" % int(ceil(mothership.wreck_t)), Color(1.0, 0.3, 0.3))
 				elif enemies.any_within(ship.position, HANGAR_LOCK_RADIUS):
 					hud.message("HANGAR ZAMKNIĘTY — zgub lub zestrzel myśliwce!", Color(1.0, 0.3, 0.3))
@@ -375,6 +389,9 @@ func _abort_expedition() -> void:
 		Audio.play_game_music()
 	if ship.docked:
 		return
+	if training_ctl != null and not training_ctl.can_dock():
+		hud.message("Nie ma odwrotu — walcz!", Color(1.0, 0.3, 0.3))
+		return
 	GameState.lose_cargo()
 	dock("Wyprawa przerwana. Ładunek z wyprawy przepadł.")
 
@@ -424,7 +441,8 @@ func launch() -> void:
 	hud.get_parent().visible = true
 	_show_world(true)
 	GameState.sorties += 1
-	Achievements.unlock("first_launch")
+	if not GameState.training:
+		Achievements.unlock("first_launch")
 	ship.reset_for_launch()
 	if (ship.tool == 2 and GameState.stat("lab") <= 0.0) or (ship.tool == 3 and GameState.stat("rebuild") <= 0.0):
 		ship.tool = 1
@@ -481,6 +499,8 @@ func _on_tile_destroyed(_idx: int, pos: Vector2, drops: Dictionary, info: String
 
 
 func _on_city_destroyed(_pos: Vector2) -> void:
+	if GameState.training:
+		return
 	cities_since_fighter += 1
 	if cities_since_fighter >= next_fighter_at:
 		cities_since_fighter = 0
@@ -489,6 +509,8 @@ func _on_city_destroyed(_pos: Vector2) -> void:
 
 ## Patrole: co jakiś czas poza ekranem pojawia się samotny myśliwiec albo grupa, najczęściej przy miastach.
 func _update_patrols(delta: float) -> void:
+	if GameState.training:
+		return
 	if ship.docked or ship.dead or GameState.sorties < 2:
 		return
 	patrol_timer -= delta
@@ -564,6 +586,8 @@ func _spawn_wave() -> void:
 # ---------------- Oblężenie Statku Matki ----------------
 
 func _update_siege(delta: float) -> void:
+	if GameState.training:
+		return   # w szkoleniu atak na Matkę uruchamia scenariusz
 	if ship.docked or ship.dead or GameState.in_boss or mothership.wrecked:
 		return
 	if mothership.siege:
@@ -782,4 +806,7 @@ func _on_ship_died() -> void:
 	enemies.clear_all()
 	pending_fighters = 0
 	hud.message("KADŁUB ZNISZCZONY", Color(1.00, 0.10, 0.10))
+	# szkolenie: przegrana z bossem kończy scenariusz zamiast powrotu do doku
+	if training_ctl != null and training_ctl.handle_death():
+		return
 	respawn_timer = 2.5

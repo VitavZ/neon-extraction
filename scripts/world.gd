@@ -214,6 +214,9 @@ func _process(delta: float) -> void:
 		var sp: Vector2 = ship.global_position
 		var friends := _friendlies() if active else []
 		for i in turrets_in_rect(Rect2(sp, Vector2.ZERO).grow(MISSILE_RANGE + T)):
+			# szkolenie: wieżyczki pod tarczą miasta milczą, dopóki tarcza stoi
+			if protected.has(i):
+				continue
 			var t: Dictionary = turrets[i]
 			var tp := idx_center(i)
 			var to := sp - tp
@@ -279,6 +282,51 @@ func _process(delta: float) -> void:
 		overlay.queue_redraw()
 		scan_layer.queue_redraw()
 
+
+# =====================================================================
+# SZKOLENIE (scripts/training.gd)
+# =====================================================================
+
+## Małe miasto wokół komórki c (promień r w kafelkach) z kilkoma wieżyczkami. Zwraca indeksy jego kafelków.
+func stamp_town(c: Vector2i, r: float, turret_count: int, seed_value: int) -> Array:
+	var out: Array = []
+	var ri := int(ceil(r))
+	for dy in range(-ri, ri + 1):
+		for dx in range(-ri, ri + 1):
+			var x := c.x + dx
+			var y := c.y + dy
+			if x < 0 or y < 0 or x >= N or y >= H or Vector2(dx, dy).length() > r:
+				continue
+			var i := y * N + x
+			if surface[i] == DEEP or surface[i] == OCEAN or surface[i] == RIVER:
+				continue
+			surface[i] = CITY
+			layer[i] = L_SURFACE
+			deposit[i] = 0
+			max_hp[i] = TILE_DEFS[CITY]["hp"] * (1.0 + danger(x, y) / 90.0)
+			hp[i] = max_hp[i]
+			if turrets.has(i):
+				turrets.erase(i)
+				var key := _bucket_key(x, y)
+				if turret_buckets.has(key):
+					turret_buckets[key].erase(i)
+			out.append(i)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var pool := out.duplicate()
+	for k in mini(turret_count, pool.size()):
+		var i: int = pool.pop_at(rng.randi_range(0, pool.size() - 1))
+		turrets[i] = {"cd": rng.randf_range(0.5, 2.0), "angle": rng.randf() * TAU}
+		if k < 2:
+			turrets[i]["kind"] = "missile"
+			turrets[i]["cd"] = rng.randf_range(2.0, 5.0)
+		var key := _bucket_key(i % N, i / N)
+		if not turret_buckets.has(key):
+			turret_buckets[key] = []
+		turret_buckets[key].append(i)
+	_build_minimap()
+	_redraw_all()
+	return out
 
 # =====================================================================
 # RAKIETY SAMONAPROWADZAJĄCE

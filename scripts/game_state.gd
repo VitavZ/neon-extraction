@@ -11,6 +11,7 @@ const Upgrades = preload("res://scripts/upgrades.gd")
 const Quests = preload("res://scripts/quests.gd")
 
 const Sectors = preload("res://scripts/sectors.gd")
+const Training = preload("res://scripts/training.gd")
 
 ## Koszt przeniesienia Statku Matki o jeden sektor (mnożony przez liczbę kroków).
 const MOVE_COST := {"metal": 220, "electronics": 45, "gold": 14, "uranium": 6}
@@ -168,6 +169,7 @@ var boss_states: Dictionary = {}   # sektor (tekst) -> "pending" (czeka na walk�
 var metros_done: Dictionary = {}   # sektor (tekst) -> true, gdy metropolia zniszczona w 100%
 var metro_rebuilt_frac: Dictionary = {}   # sektor (tekst) -> odsetek odbudowanej metropolii (liczy mapa, nie zapisywane)
 var in_boss := false                 # trwa minigra z bossem (główna gra w pauzie)
+var training := false                # szkolenie w Roswell: osobna rozgrywka bez zapisu (start_training)
 var pause_menu := false              # otwarta pauza (ESC)
 const GRID_VERSION := 2              # wersja układu drzewka ulepszeń w zapisie (starsze => _migrate_grid)
 
@@ -333,7 +335,21 @@ var empire_seen := false         # gracz otworzył już zakładkę Imperium
 const MINER_DEFAULTS := ["wood", "stone", "biomass", "sand", "water", "copper"]
 var miner_res: Array = MINER_DEFAULTS.duplicate()   # surowiec przydzielony każdemu statkowi wydobywczemu
 
+## Szkolenie w Roswell (menu TUTORIAL): świeży stan z gotowym statkiem, bez zapisu. Dane w scripts/training.gd.
+func start_training() -> void:
+	new_game()
+	training = true
+	tutorial_step = 999          # zwykły samouczek wyłączony - szkolenie ma własne okienka
+	mother_sector = Training.SECTOR
+	levels = Training.LEVELS.duplicate()
+	levels["core"] = 1
+	bank = Training.BANK.duplicate()
+	recalc_stats()
+	refresh_quests()
+
+
 func new_game() -> void:
+	training = false
 	bank = {}
 	cargo = {}
 	levels = {"core": 1}
@@ -781,6 +797,8 @@ func _migrate_grid() -> void:
 func cost_of(u: Dictionary) -> Dictionary:
 	var lv := get_level(u["id"])
 	var out := {}
+	if training and Training.COSTS.has(u["id"]):
+		return Training.COSTS[u["id"]].duplicate()
 	if u.has("time"):
 		for k in u["cost"]:
 			out[k] = int(ceil(float(u["cost"][k]) * pow(Upgrades.COST_GROWTH, lv)))
@@ -855,6 +873,9 @@ func format_stat(key: String, value: float, signed := false) -> String:
 # ---------------- Zapis ----------------
 
 func save_game(map_data: Dictionary) -> void:
+	# szkolenie w Roswell nigdy nie zapisuje (nie może nadpisać prawdziwego slotu)
+	if training:
+		return
 	saved_map = map_data
 	var data := {
 		"version": 2, "sectors_v": 3, "seed": world_seed, "mother_sector": mother_sector, "cities_destroyed": cities_destroyed, "boss_states": boss_states, "metros_done": metros_done, "bank": bank, "levels": levels,

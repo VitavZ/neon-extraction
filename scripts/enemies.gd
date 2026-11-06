@@ -232,7 +232,7 @@ func damage_fighter(f: Dictionary, amount: float, looted := true) -> void:
 ## looted = false: zabójstwo bez łupu (np. rakiety Statku Matki).
 func damage_in_radius(p: Vector2, r: float, amount: float, looted := true) -> void:
 	for f in fighters:
-		if not f.get("dead", false) and f["pos"].distance_to(p) <= r + HIT_RADIUS:
+		if not f.get("dead", false) and f["pos"].distance_to(p) <= r + float(f.get("hr", HIT_RADIUS)):
 			damage_fighter(f, amount, looted)
 
 
@@ -245,7 +245,7 @@ func laser_hit(a: Vector2, b: Vector2, amount: float) -> Vector2:
 		if f.get("dead", false):
 			continue
 		var cp := Geometry2D.get_closest_point_to_segment(f["pos"], a, b)
-		var hr := HIT_RADIUS * (1.4 if f["kind"] == "tank" else 1.0)
+		var hr: float = f.get("hr", HIT_RADIUS * (1.4 if f["kind"] == "tank" else 1.0))
 		if cp.distance_to(f["pos"]) < hr and a.distance_to(cp) < bd:
 			bd = a.distance_to(cp)
 			best = cp
@@ -282,6 +282,9 @@ func _process(delta: float) -> void:
 		if f["acc_t"] >= 0.15:
 			f["acc_t"] = 0.0
 			_flush(f)
+		# "ext": przeciwnik sterowany z zewnątrz (boss szkolenia w training.gd) - tu tylko obrażenia i trafienia
+		if f.get("ext", false):
+			continue
 		if f["kind"] == "tank":
 			_process_tank(f, delta, active)
 			continue
@@ -735,7 +738,7 @@ func _draw() -> void:
 		if f["kind"] == "tank":
 			_draw_tank(f)
 	for f in fighters:
-		if f["kind"] == "tank":
+		if f["kind"] == "tank" or f.get("ext", false):
 			continue
 		var p: Vector2 = f["pos"]
 		var r: float = f["rot"]

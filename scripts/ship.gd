@@ -281,6 +281,16 @@ func _soft_bounds(delta: float) -> void:
 		vel.y += BOUNDS_PUSH * delta
 	elif position.y > lim.y + BOUNDS_MARGIN:
 		vel.y -= BOUNDS_PUSH * delta
+	# szkolenie: obszar wokół Roswell to twarda granica
+	var pr: Rect2 = world.play_rect
+	if pr.has_area():
+		var inside := Vector2(clampf(position.x, pr.position.x, pr.end.x), clampf(position.y, pr.position.y, pr.end.y))
+		if inside != position:
+			var n := (inside - position).normalized()
+			var along_n := vel.dot(n)
+			if along_n < 0.0:
+				vel -= n * along_n * 1.6
+			position = inside
 	# pole siłowe zamkniętych sektorów: twarda ściana, bez marginesu
 	var push: Vector2 = world.barrier_push(position)
 	if push != Vector2.ZERO:

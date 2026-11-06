@@ -17,7 +17,7 @@ const MAX_SHIPS := 8
 enum { F_LIVE, F_DEAD, F_IMPERIAL }
 const SHIP_SHAPE := [Vector2(22, 0), Vector2(4, -7), Vector2(-6, -18), Vector2(-14, -16), Vector2(-9, -6),
 	Vector2(-13, 0), Vector2(-9, 6), Vector2(-14, 16), Vector2(-6, 18), Vector2(4, 7)]
-const MAIN_ITEMS := ["START", "OSIĄGNIĘCIA", "OPCJE", "WYJŚCIE"]
+const MAIN_ITEMS := ["START", "TUTORIAL", "OSIĄGNIĘCIA", "OPCJE", "WYJŚCIE"]
 const VERSION := "Version 0.3.0"
 const Options = preload("res://scripts/options.gd")
 const OPT_ITEMS := Options.ITEMS
@@ -69,6 +69,8 @@ var env: Environment
 
 
 func _ready() -> void:
+	# powrót ze szkolenia: dalej gra się już normalnymi slotami
+	GameState.training = false
 	pf = Style.font_pixel()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -276,6 +278,7 @@ func _activate(i: int) -> void:
 		"main":
 			match MAIN_ITEMS[i]:
 				"START": _go("slots", 0)
+				"TUTORIAL": _leave(_start_training)
 				"OSIĄGNIĘCIA": _go("achievements", 0)
 				"OPCJE": _go("options", 0)
 				"WYJŚCIE": _leave(func(): get_tree().quit())
@@ -300,6 +303,12 @@ func _activate(i: int) -> void:
 				_go("main", MAIN_ITEMS.find("OPCJE"))
 			else:
 				_change_option(OPT_ITEMS[i], 1)
+
+
+## Szkolenie w Roswell: osobna rozgrywka bez zapisu (scripts/training.gd).
+func _start_training() -> void:
+	GameState.start_training()
+	get_tree().change_scene_to_file("res://main.tscn")
 
 
 func _start_slot(n: int) -> void:

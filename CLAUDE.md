@@ -57,6 +57,7 @@ ale nie może wołać funkcji z części późniejszych (Godot zgłosi „Functi
 | `pause_menu.gd` | Pauza (ESC): wznów / powrót na Matkę / opcje / sterowanie / osiągnięcia. |
 | `options.gd` | Wspólna logika OPCJI dla menu i pauzy (`ITEMS`, `NAMES`, `change`, `value_text`, suwaki). |
 | `tutorial.gd`, `quests.gd`, `achievements.gd` | Samouczek (pop-upy), rozkazy Imperium Vex (rodzaje: event/metro/rebuild/collect; logika w `game_state.gd` `refresh_quests`), osiągnięcia (autoload, `user://achievements.cfg`). Nazwy miast wyświetlać przez `GameState.city_name(s)`. |
+| `training.gd` | Szkolenie w Roswell (TUTORIAL w menu): `GameState.training` = bez zapisu, gotowy statek (`LEVELS`), własne ceny (`COSTS`), obszar `AREA`, tarcza miasta (`world.protected`), fazy scenariusza, okienka (tutorial.gd w trybie `custom`), boss OBIEKT-51 (wpis `"ext"` w `enemies.fighters`), DANGER!, transmisja Vex (`VEX_TEXT` - do podmiany), osiągnięcie `training`. Test: `tools/test/training_flow.gd`. |
 | `sectors.gd` | 9 sektorów 3×3 po 160×160 kafelków, metropolie, Dystrykt Federalny. |
 | `style.gd`, `mesh_painter.gd`, `crt.gd`, `audio.gd`, `splash.gd` | Styl i pomocniki rysowania, wsadowe rysowanie kafelków do jednej siatki, filtr CRT/jaskrawość, dźwięk, ekran startowy. |
 
