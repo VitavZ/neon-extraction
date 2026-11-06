@@ -157,9 +157,9 @@ func _run() -> void:
 	_log("paliwo w szkoleniu: -%.2f / s (bez ruchu)" % ((f0 - main.ship.fuel) / 3.0))
 	main.ship.fuel = 0.0
 	var w2 := Time.get_ticks_msec()
-	while not main.ship.dead and Time.get_ticks_msec() - w2 < 9000:
+	while not main.ship.dead and Time.get_ticks_msec() - w2 < 30000:
 		await _wait(0.1)
-	_expect("pusty bak: wybuch po %.1f s" % ((Time.get_ticks_msec() - w2) / 1000.0), main.ship.dead)
+	_expect("pusty bak: kadłub 300 zniszczony po %.1f s (15/s)" % ((Time.get_ticks_msec() - w2) / 1000.0), main.ship.dead)
 	await _shot("c03_gather_popup")
 	_log("błędów: %d" % bad)
 	quit()

@@ -260,7 +260,7 @@ func _process(delta: float) -> void:
 			hud.message("Niski poziom paliwa — pora wracać!", Color(1.00, 0.60, 0.20))
 		if ship.fuel <= 0.0 and not fuel_empty_warned:
 			fuel_empty_warned = true
-			hud.show_big("BRAK PALIWA!", "Reaktor wybuchnie za %d s" % int(ship.EMPTY_FUSE))
+			hud.show_big("BRAK PALIWA!", "Kadłub traci %d punktów na sekundę — wracaj!" % int(ship.EMPTY_DRAIN))
 			Audio.play("warning", 0.0)
 
 	_update_patrols(delta)

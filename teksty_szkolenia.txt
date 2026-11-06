@@ -246,10 +246,10 @@ Pauza -> powrót na Matkę od ataku do końca:
 Nie ma odwrotu — walcz!
 
 Pusty bak (cała gra) - duży napis:
-BRAK PALIWA! / Reaktor wybuchnie za 5 s
+BRAK PALIWA! / Kadłub traci 15 punktów na sekundę — wracaj!
 
 Pusty bak (cała gra) - pasek paliwa:
-PALIWO — PUSTO! WYBUCH ZA 5 s
+PALIWO — PUSTO! KADŁUB -15/s, WRACAJ
 
 Ostrzeżenie - wielki napis:
 DANGER!

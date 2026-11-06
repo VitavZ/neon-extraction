@@ -117,6 +117,7 @@ func _run() -> void:
 	await _wait(0.5)
 	main.ship.position = tr.town_center + Vector2(300, 250)
 	main.ship.tool = 3
+	_log("obszar odbudowy: promień %.1f, kafelków naraz: %d" % [gs.stat("rebuild_area"), main.ship.rebuild_tiles(tr.town[tr.town.size() / 2]).size()])
 	for i in tr.town:
 		if tr.rebuilt_frac() >= 0.8:
 			break

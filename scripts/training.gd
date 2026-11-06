@@ -28,7 +28,8 @@ const LEVELS := {
 const BANK := {}
 ## Ceny w szkoleniu (zamiast zwykłych): mało, żeby zebrać je w jednym locie.
 ## Szkolenie: mocniejsza odbudowa od razu (dodawane w GameState.recalc_stats).
-const STAT_BONUS := {"rebuild_range": 240.0, "rebuild_speed": 0.5}
+## rebuild_area +1.0: promień 1,5 = obszar 3x3, czyli do 9 kafelków odbudowywanych naraz.
+const STAT_BONUS := {"rebuild_range": 240.0, "rebuild_speed": 0.5, "rebuild_area": 1.0}
 const COSTS := {
 	"laser_dmg": {"biomass": 40, "stone": 30},
 	"rebuild": {"scrap": 30, "metal": 15},
