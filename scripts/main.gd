@@ -697,7 +697,7 @@ func _on_boss_finished(won: bool) -> void:
 	else:
 		# jak przy zwykłym zniszczeniu: wrak wraca do Matki, ładunek przepada
 		GameState.lose_cargo()
-		dock("Statek zniszczony w walce o %s. Wróć przez różowy punkt w mieście." % String(Sectors.LIST[boss_sector]["city"]))
+		dock("Statek zniszczony w walce o %s. Wróć przez różowy punkt w mieście." % GameState.city_name(boss_sector))
 
 
 func _on_missile_launched() -> void:
@@ -732,6 +732,9 @@ func _on_imperial_spread(idx: int) -> void:
 ## Wykonany rozkaz: w doku plakietka na ekranie Statku Matki, w locie komunikat. Nagrodę odbiera się w Rozkazach.
 func _on_quest_completed(q: Dictionary) -> void:
 	Audio.play("research_done", 0.0)
+	if q.has("new_name") and not ship.docked:
+		# odbudowana metropolia dostaje nową nazwę na mapie
+		hud.show_big(String(q["new_name"]), "%s ODBUDOWANY PRZEZ IMPERIUM" % String(Sectors.LIST[int(q["sector"])]["city"]))
 	if ship.docked:
 		upgrade_screen.toast(String(q["title"]), int(q["reward"]))
 	else:

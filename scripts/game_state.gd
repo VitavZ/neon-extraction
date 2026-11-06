@@ -166,6 +166,7 @@ var mother_sector: int = Sectors.START
 var cities_destroyed: int = 0      # zniszczone kafelki miast: im więcej, tym więcej myśliwców
 var boss_states: Dictionary = {}   # sektor (tekst) -> "pending" (czeka na walkę) / "beaten"
 var metros_done: Dictionary = {}   # sektor (tekst) -> true, gdy metropolia zniszczona w 100%
+var metro_rebuilt_frac: Dictionary = {}   # sektor (tekst) -> odsetek odbudowanej metropolii (liczy mapa, nie zapisywane)
 var in_boss := false                 # trwa minigra z bossem (główna gra w pauzie)
 var pause_menu := false              # otwarta pauza (ESC)
 const GRID_VERSION := 2              # wersja układu drzewka ulepszeń w zapisie (starsze => _migrate_grid)
@@ -351,6 +352,7 @@ func new_game() -> void:
 	quests = {}
 	collected = {}
 	quests_new = 0
+	metro_rebuilt_frac = {}
 	empire_seen = false
 	miner_res = MINER_DEFAULTS.duplicate()
 	recalc_stats()
@@ -573,6 +575,8 @@ func _quest_met(q: Dictionary) -> bool:
 	match q["kind"]:
 		"metro":
 			return metros_done.has(str(q["sector"]))
+		"rebuild":
+			return metro_rebuilt(int(q["sector"])) >= float(q["fraction"]) - 0.0001
 		"collect":
 			return int(collected.get(q["res"], 0)) >= int(q["target"])
 	return false
@@ -614,7 +618,38 @@ func quest_progress(q: Dictionary) -> Array:
 		"metro":
 			var key := str(q["sector"])
 			return [1 if metros_done.has(key) else 0, 1]
+		"rebuild":
+			# w procentach: [ile odbudowano, ile trzeba]
+			var goal := int(round(float(q["fraction"]) * 100.0))
+			return [mini(int(metro_rebuilt(int(q["sector"])) * 100.0), goal), goal]
 	return [0, 1]
+
+
+## Odsetek kafelków metropolii sektora, które są już kafelkami Imperium (liczy mapa: world/base.gd).
+func metro_rebuilt(s: int) -> float:
+	return float(metro_rebuilt_frac.get(str(s), 0.0))
+
+
+## Mapa zgłasza zmianę odbudowy metropolii; rozkazy typu "rebuild" sprawdzają się od razu.
+func set_metro_rebuilt(s: int, frac: float) -> void:
+	metro_rebuilt_frac[str(s)] = frac
+	if quests.get(_rebuild_quest_id(s), "") == "active":
+		refresh_quests()
+
+
+func _rebuild_quest_id(s: int) -> String:
+	for q in Quests.all():
+		if q["kind"] == "rebuild" and int(q["sector"]) == s:
+			return q["id"]
+	return ""
+
+
+## Nazwa metropolii na mapie i w interfejsie (po wykonaniu rozkazu odbudowy może być nowa).
+func city_name(s: int) -> String:
+	for q in Quests.all():
+		if q.has("new_name") and int(q["sector"]) == s and quests.get(q["id"], "") in ["ready", "done"]:
+			return String(q["new_name"])
+	return String(Sectors.LIST[s]["city"])
 
 
 ## Zakładka Imperium: po zniszczeniu Nowego Jorku i pokonaniu jego bossa.

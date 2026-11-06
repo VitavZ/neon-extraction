@@ -270,7 +270,7 @@ func _draw_sector_banner(vs: Vector2) -> void:
 	var pf: Font = Style.font_pixel()
 	var info: Dictionary = Sectors.LIST[view_sector]
 	var name_txt: String = info["name"]
-	var city_txt: String = ("METROPOLIA: " + String(info["city"])) if Sectors.has_city(view_sector) else Sectors.label(view_sector)
+	var city_txt: String = ("METROPOLIA: " + GameState.city_name(view_sector)) if Sectors.has_city(view_sector) else Sectors.label(view_sector)
 	var cx := vs.x * 0.5
 	var y0 := vs.y * 0.24 + (1.0 - open) * 14.0
 	var half := maxf(pf.get_string_size(name_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 40).x * 0.5 + 40.0, 200.0) * open
@@ -600,7 +600,7 @@ func _draw() -> void:
 			var cpos: Vector2 = mp + (world.city_pos(s) - origin) * k
 			if not map_rect.has_point(cpos) or not Sectors.has_city(s):
 				continue
-			var cname: String = Sectors.LIST[s]["city"]
+			var cname: String = GameState.city_name(s)
 			var cw := _tw(cname, 11, true)
 			var cl := Vector2(clampf(cpos.x - cw * 0.5, mp.x + 2, mp.x + ms - cw - 2), cpos.y + 17 if cpos.y < mp.y + ms - 24 else cpos.y - 9)
 			draw_string_outline(font_b, cl, cname, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 4, Color(0, 0, 0, 0.95))
@@ -689,7 +689,7 @@ func _draw() -> void:
 		_stat_bar(mp.x, ly, ms, "ODBUDOWA ZIEMI", "%.2f%%" % world.imperial_percent(), world.imperial_percent() / 100.0, Style.GOLD)
 		ly += 25.0
 		if Sectors.has_city(sector):
-			_stat_bar(mp.x, ly, ms, String(Sectors.LIST[sector]["city"]), "%d%%" % int(world.metro_destroyed_fraction(sector) * 100.0), world.metro_destroyed_fraction(sector), Color(1.0, 0.55, 0.9))
+			_stat_bar(mp.x, ly, ms, GameState.city_name(sector), "%d%%" % int(world.metro_destroyed_fraction(sector) * 100.0), world.metro_destroyed_fraction(sector), Color(1.0, 0.55, 0.9))
 			ly += 25.0
 		for lk in lms:
 			var lf: float = world.landmark_destroyed_fraction(lk)

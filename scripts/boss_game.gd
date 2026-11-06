@@ -117,7 +117,7 @@ var tut_skip := Rect2()
 
 func setup(p_sector: int) -> void:
 	sector = p_sector
-	city_name = Sectors.LIST[p_sector]["city"]
+	city_name = GameState.city_name(p_sector)
 	# ulepszenia statku przekładają się na wytrzymałość i startową siłę ognia
 	max_hp = clampi(3 + int((GameState.stat("max_hull") + GameState.stat("max_shield")) / 100.0), 3, 8)
 	hp = max_hp

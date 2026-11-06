@@ -350,7 +350,7 @@ func _draw_city_labels(view: Rect2) -> void:
 			continue
 		if GameState.boss_state(s) != "":
 			_draw_boss_portal(p)
-		var txt: String = Sectors.LIST[s]["city"]
+		var txt: String = GameState.city_name(s)
 		if txt == "":
 			continue
 		var w := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize).x

@@ -56,7 +56,7 @@ ale nie może wołać funkcji z części późniejszych (Godot zgłosi „Functi
 | `menu.gd` | Menu główne z żywą mapą w tle, sloty, opcje, sterowanie, osiągnięcia. |
 | `pause_menu.gd` | Pauza (ESC): wznów / powrót na Matkę / opcje / sterowanie / osiągnięcia. |
 | `options.gd` | Wspólna logika OPCJI dla menu i pauzy (`ITEMS`, `NAMES`, `change`, `value_text`, suwaki). |
-| `tutorial.gd`, `quests.gd`, `achievements.gd` | Samouczek (pop-upy), rozkazy Imperium Vex, osiągnięcia (autoload, `user://achievements.cfg`). |
+| `tutorial.gd`, `quests.gd`, `achievements.gd` | Samouczek (pop-upy), rozkazy Imperium Vex (rodzaje: event/metro/rebuild/collect; logika w `game_state.gd` `refresh_quests`), osiągnięcia (autoload, `user://achievements.cfg`). Nazwy miast wyświetlać przez `GameState.city_name(s)`. |
 | `sectors.gd` | 9 sektorów 3×3 po 160×160 kafelków, metropolie, Dystrykt Federalny. |
 | `style.gd`, `mesh_painter.gd`, `crt.gd`, `audio.gd`, `splash.gd` | Styl i pomocniki rysowania, wsadowe rysowanie kafelków do jednej siatki, filtr CRT/jaskrawość, dźwięk, ekran startowy. |
 

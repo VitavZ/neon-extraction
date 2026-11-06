@@ -34,6 +34,7 @@ func rebuild(i: int) -> bool:
 	imperial_count += 1
 	devastated_count -= 1
 	imperial_list.append(i)
+	_metro_tile_imperial(i)
 	_maybe_ally(i)
 	_update_minimap_pixel(i)
 	_mark_dirty(i)
@@ -71,6 +72,7 @@ func _imperial_spread_once() -> bool:
 				_landmark_tile_gone(j)
 			imperial_count += 1
 			imperial_list.append(j)
+			_metro_tile_imperial(j)
 			_maybe_ally(j, 0.5)
 			recent_hits.erase(j)
 			_update_minimap_pixel(j)

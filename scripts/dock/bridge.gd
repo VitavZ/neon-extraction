@@ -95,7 +95,7 @@ func _draw_bridge() -> void:
 		if Sectors.has_city(s):
 			var cp: Vector2 = m.position + world.city_pos(s) / world_size * m.size
 			draw_rect(Rect2(cp - Vector2(3, 3), Vector2(6, 6)), Color(1.0, 0.4, 0.95))
-			var cname: String = info["city"]
+			var cname: String = GameState.city_name(s)
 			var cw := font_b.get_string_size(cname, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
 			var cl := Vector2(clampf(cp.x - cw * 0.5, r.position.x + 4, r.end.x - cw - 4), clampf(cp.y - 8, r.position.y + 40, r.end.y - 6))
 			draw_string_outline(font_b, cl, cname, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, 4, Color(0, 0, 0, 0.95))

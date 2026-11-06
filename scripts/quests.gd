@@ -8,6 +8,10 @@ const STORY := [
 		"reward": 10, "kind": "event", "event": "dock"},
 	{"id": "destroy_ny", "title": "Zniszcz Nowy Jork", "desc": "Zrównaj z ziemią całą metropolię Nowego Jorku.",
 		"reward": 100, "kind": "metro", "sector": 2, "after": "first_expedition"},
+	# "rebuild": zalicza się, gdy taki odsetek kafelków metropolii jest kafelkami Imperium (odbudowa i rozrost);
+	# "new_name": od wykonania rozkazu miasto nosi nową nazwę (GameState.city_name)
+	{"id": "rebuild_ny", "title": "Odbuduj Nowy Jork", "desc": "Odbuduj w stylu Imperium 80% kafelków metropolii Nowego Jorku.",
+		"reward": 50, "kind": "rebuild", "sector": 2, "fraction": 0.8, "new_name": "NOWSZY JORK", "after": "destroy_ny"},
 ]
 
 ## [surowiec, dopełniacz do tytułu, dopełniacz do opisu, próg I, próg II]

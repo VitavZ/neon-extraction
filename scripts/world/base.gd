@@ -96,6 +96,7 @@ var missile_beep := 0.0
 var metro_total: Array = []    # liczba kafelków metropolii w każdym sektorze
 var metro_left: Array = []     # ile jeszcze stoi
 var metro_last: Array = []     # ostatnie 5%: kafelki podświetlone w każdym sektorze
+var metro_imperial: Array = [] # ile kafelków metropolii stało się kafelkami Imperium (odbudowa, rozrost)
 var chunks: Array = []        # malarze (Node2D) rysujący kafelki fragmentu mapy
 var dirty_chunks: Dictionary = {}
 var chunk_ready := PackedByteArray()   # 1 = fragment ma zbudowaną siatkę
@@ -203,15 +204,20 @@ func _count_metros() -> void:
 	metro_last.resize(n)
 	metro_total.fill(0)
 	metro_left.fill(0)
+	metro_imperial.resize(n)
+	metro_imperial.fill(0)
 	for i in TOTAL:
 		if surface[i] == METRO:
 			var s := Sectors.sector_at(i % N, i / N)
 			metro_total[s] += 1
 			if layer[i] == L_SURFACE:
 				metro_left[s] += 1
+			elif layer[i] == L_IMPERIAL:
+				metro_imperial[s] += 1
 	for s in n:
 		metro_last[s] = []
 		_refresh_metro_last(s)
+		_report_metro_rebuilt(s)
 	landmark_total.resize(Sectors.LANDMARKS.size())
 	landmark_left.resize(Sectors.LANDMARKS.size())
 	landmark_total.fill(0)
@@ -447,6 +453,19 @@ func _landmark_tile_gone(i: int) -> void:
 
 func metro_destroyed_fraction(s: int) -> float:
 	return 1.0 - float(metro_left[s]) / maxf(1.0, float(metro_total[s]))
+
+
+## Kafelek stał się kafelkiem Imperium: jeśli to metropolia, rośnie postęp jej odbudowy (rozkaz "Odbuduj ...").
+func _metro_tile_imperial(i: int) -> void:
+	if surface[i] != METRO:
+		return
+	var s := Sectors.sector_at(i % N, i / N)
+	metro_imperial[s] += 1
+	_report_metro_rebuilt(s)
+
+
+func _report_metro_rebuilt(s: int) -> void:
+	GameState.set_metro_rebuilt(s, float(metro_imperial[s]) / maxf(1.0, float(metro_total[s])))
 
 
 func _metro_tile_gone(i: int) -> void:

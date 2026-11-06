@@ -410,7 +410,7 @@ func _draw_quest(cv: CanvasItem, r: Rect2, q: Dictionary, idx: int) -> void:
 		var bar := Rect2(r.position.x + 12, r.end.y - 9, r.size.x - 110, 4)
 		cv.draw_rect(bar, Color(0.25, 0.1, 0.25, a))
 		cv.draw_rect(Rect2(bar.position, Vector2(bar.size.x * float(pr[0]) / float(pr[1]), bar.size.y)), Color(c.r, c.g, c.b, a))
-		var pt := "%d/%d" % [pr[0], pr[1]]
+		var pt := ("%d%% / %d%%" if q["kind"] == "rebuild" else "%d/%d") % [pr[0], pr[1]]
 		cv.draw_string(font, Vector2(r.end.x - 12 - font.get_string_size(pt, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x, r.end.y - 5), pt, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.8 * a))
 
 
