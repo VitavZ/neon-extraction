@@ -18,7 +18,7 @@ enum { F_LIVE, F_DEAD, F_IMPERIAL }
 const SHIP_SHAPE := [Vector2(22, 0), Vector2(4, -7), Vector2(-6, -18), Vector2(-14, -16), Vector2(-9, -6),
 	Vector2(-13, 0), Vector2(-9, 6), Vector2(-14, 16), Vector2(-6, 18), Vector2(4, 7)]
 const MAIN_ITEMS := ["START", "TUTORIAL", "OSIĄGNIĘCIA", "OPCJE", "WYJŚCIE"]
-const VERSION := "Version 0.3.1"
+const VERSION := "Version 0.3.2T"
 const Options = preload("res://scripts/options.gd")
 const OPT_ITEMS := Options.ITEMS
 

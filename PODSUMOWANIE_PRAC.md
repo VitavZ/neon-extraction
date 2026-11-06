@@ -1,7 +1,7 @@
 # Neon Extraction – historia prac z Claude (stan na 2026-11-06)
 
 Zasady pracy, testy, git i mapa kodu są w **CLAUDE.md** (wczytywany automatycznie). Tu tylko historia i otwarte sprawy.
-Aktualna wersja: **v0.3.1**.
+Aktualna wersja: **v0.3.2T**.
 
 ## Zrobione funkcje (w kolejności)
 1. **Podgląd łupu przy kopaniu** – panel nad kafelkiem (`hud._draw_mine_info`, `world.tile_drops_preview`, `world.hidden_deposit_name`).
@@ -29,9 +29,10 @@ Aktualna wersja: **v0.3.1**.
 23. **Szkolenie - poprawki**: okienka nie wyprzedzają postępu (błąd z dokowaniem bez surowców); jeden obszar (minimapa, panel i mapa tylko z Roswell, miasta i wieżyczki wokół usunięte); 8 ćwiczeń sterowania z okienkami, zaliczanych dopiero po wykonaniu (obrót, ciąg, hamowanie, manewr, drift, zoom, laser, rakieta). Wszystkie teksty szkolenia: `teksty_szkolenia.txt`.
 24. **Zlane zasięgi wieżyczek** (`world/overlay.gd` `_ring_outline`, `_flush_rings`): zamiast osobnych okręgów jeden obrys strefy chronionej (osobno zwykłe i rakietowe wieżyczki); łuki liczone raz i zapamiętane, obrys składany co 0,25 s - koszt spadł z ok. 3,6 ms do ok. 0,2 ms na klatkę w gęstym mieście, widać go z 900 px. Pomiary: `tools/test/turret_rings.gd`, `tools/test/profile_city.gd`.
 25. **Strefy wieżyczek i wydajność**: strefy pokazywane dla całego kadru, wypełnione (zwykłe pomarańczowo-czerwone, rakietowe fioletowe; bez ciemnienia na nakładkach dzięki CanvasGroup), gładkie łuki (odcinki 18 px); po zniszczeniu wieżyczki przeliczane tylko sąsiadki (wcześniej strefy migały). Skaner złóż rysowany jednym wywołaniem (4,2 ms -> 0,3 ms). Pomiar: logika gry to tylko ok. 1,3 ms/klatkę, reszta to rysowanie (HUD ok. 3-4 ms, nakładka świata, efekty, wrogowie) i silnik.
+26. **HUD w dwóch warstwach** (`hud.gd`): statyczna część (emblemat, surowce, sloty, minimapa z panelem, podpowiedź) odświeżana co 0,1 s, ruchoma co klatkę; pomocniki rysują na `cv`. Koszt HUD 3-4,7 ms -> ok. 1,2 ms. Teksty szkolenia autora wgrane z `teksty_szkolenia.txt` (skrypt nadpisuje STEPS/DRILLS/VEX_TEXT w `training.gd`).
 
 ## Otwarte / do obserwacji
-- Gęste miasto: ok. 45 FPS (klatka ok. 21 ms bez v-sync); logika gry ok. 1,3 ms - koszt to rysowanie: HUD (rysowany co klatkę od zera), nakładka świata, efekty, wrogowie. Kandydat: HUD rysowany rzadziej / w częściach.
+- Gęste miasto: ok. 45 FPS (klatka ok. 21 ms bez v-sync); logika gry ok. 1,3 ms - koszt to rysowanie: HUD (rysowany co klatkę od zera), nakładka świata, efekty, wrogowie. HUD już podzielony; klatka w gęstym mieście nadal ok. 21 ms - wygląda na limit karty/silnika (poświata HDR, MSAA), nie procesora.
 - Szkolenie: tekst transmisji Vex (`training.gd` `VEX_TEXT`) czeka na historyjkę; scenariusz nie był grany ręcznie.
 - Balans z punktu 20 nie był jeszcze sprawdzony w normalnej grze – do dostrojenia stałe `SCALE_*` w enemies.gd i limity syfonów w ship.gd.
 - Nic nie testowane na Macu.
