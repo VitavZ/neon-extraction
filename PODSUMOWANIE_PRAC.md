@@ -1,7 +1,7 @@
 # Neon Extraction – historia prac z Claude (stan na 2026-11-06)
 
 Zasady pracy, testy, git i mapa kodu są w **CLAUDE.md** (wczytywany automatycznie). Tu tylko historia i otwarte sprawy.
-Aktualna wersja: **v0.3.0**.
+Aktualna wersja: **v0.3.1**.
 
 ## Zrobione funkcje (w kolejności)
 1. **Podgląd łupu przy kopaniu** – panel nad kafelkiem (`hud._draw_mine_info`, `world.tile_drops_preview`, `world.hidden_deposit_name`).
