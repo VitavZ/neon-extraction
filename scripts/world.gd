@@ -1,5 +1,5 @@
 extends "res://scripts/world/overlay.gd"
-## Mapa USA: 6 sektorów po 160x160 kafelków połączonych w jeden świat (patrz sectors.gd).
+## Mapa USA: 9 sektorów (3x3) po 160x160 kafelków połączonych w jeden świat (patrz sectors.gd).
 ## Teren z us_map_data.gd, rysowanie wektorowe (w chunkach), niszczenie kafelków,
 ## złoża pod powierzchnią, wieżyczki obronne Ziemian i ich pociski.
 ## Ten plik: generowanie, wczytanie/zapis i główna pętla (_process: wieżyczki, pociski, odbudowa).

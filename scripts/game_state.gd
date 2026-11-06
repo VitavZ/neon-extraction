@@ -153,9 +153,9 @@ var mother_sector: int = Sectors.START
 var cities_destroyed: int = 0      # zniszczone kafelki miast: im więcej, tym więcej myśliwców
 var boss_states: Dictionary = {}   # sektor (tekst) -> "pending" (czeka na walkę) / "beaten"
 var metros_done: Dictionary = {}   # sektor (tekst) -> true, gdy metropolia zniszczona w 100%
-var in_boss := false
+var in_boss := false                 # trwa minigra z bossem (główna gra w pauzie)
 var pause_menu := false              # otwarta pauza (ESC)
-const GRID_VERSION := 2               # trwa minigra z bossem (główna gra w pauzie)
+const GRID_VERSION := 2              # wersja układu drzewka ulepszeń w zapisie (starsze => _migrate_grid)
 
 
 func _ready() -> void:

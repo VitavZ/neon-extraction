@@ -1,20 +1,7 @@
-# Neon Extraction – podsumowanie prac z Claude (stan na 2026-11-06)
+# Neon Extraction – historia prac z Claude (stan na 2026-11-06)
 
-Godot 4.7.2, GDScript, wszystko rysowane w `_draw()` (kolory HDR, styl neon/synthwave). Autoloady: `GameState`, `Audio`, `Achievements`. Teksty w grze po polsku.
-
-## Zasady testowania (WAŻNE)
-- Prawdziwy postęp gracza jest w **slocie 1** (sloty 2 i 3 też istnieją) – nigdy ich nie nadpisywać.
-- Testy tylko na **slocie 4** (kopia slotu 1), potem usunąć pliki slotu 4: `""`, `.bak`, `.tmp`, `.v1_backup`.
-- Przed testem zrobić kopię `settings.cfg` i `achievements.cfg`, po teście przywrócić; sprawdzić hash slotu 1.
-- Dane: `%APPDATA%\Godot\app_userdata\Neon Extraction`.
-- Uruchamianie testu: `C:\Users\Kamil\Desktop\Godot\Godot_v4.7.2-stable_win64_console.exe --path . --script res://test.gd -- <katalog_na_zrzuty>` (test.gd kopiowany do katalogu projektu i usuwany po teście; `extends SceneTree`, zrzuty przez `get_viewport().get_texture().get_image().save_png`).
-- Sprawdzenie składni: `--headless --check-only --script res://scripts/X.gd` (błąd „Identifier not found: GameState” jest tam normalny).
-- PowerShell: edycje plików UTF-8 bez BOM; nie nazywać funkcji `R`/`Rp` (aliasy).
-
-## Repozytorium i wydania
-- Prywatne repo: https://github.com/VitavZ/neon-extraction (gałąź `main`). Aktualna wersja: **v0.3.0** (`menu.gd: VERSION`, wersje w `export_presets.cfg`).
-- `git` nie jest w PATH – używać tego z GitHub Desktop: `$env:PATH = "C:\Users\Kamil\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd;$env:PATH"`; push przez `git -c credential.helper= -c "credential.helper=!gh auth git-credential" push`.
-- Eksport: `Godot_v4.7.2-stable_win64_console.exe --headless --path . --export-release "Windows Desktop" <ścieżka.exe>` (i `"macOS" <ścieżka.zip>`). Buildy w `..\builds\vX.Y.Z\`, wrzucane jako GitHub Release (`gh release create`), nie do repo.
+Zasady pracy, testy, git i mapa kodu są w **CLAUDE.md** (wczytywany automatycznie). Tu tylko historia i otwarte sprawy.
+Aktualna wersja: **v0.3.0**.
 
 ## Zrobione funkcje (w kolejności)
 1. **Podgląd łupu przy kopaniu** – panel nad kafelkiem (`hud._draw_mine_info`, `world.tile_drops_preview`, `world.hidden_deposit_name`).
@@ -35,14 +22,7 @@ Godot 4.7.2, GDScript, wszystko rysowane w `_draw()` (kolory HDR, styl neon/synt
 16. **Drzewko ulepszeń jak w PoE/Nova Drift**: tabela `Upgrades.TREE` (id → [rodzic, pozycja na ekranie]). Węzeł dostępny, gdy kupiony rodzic. Przewody tylko rodzic→dziecko, gałęzie z odstępami. Koszt (pierścień) nadal z pola `pos` w `LIST`, więc ceny się nie zmieniły.
 17. **11 nowych ulepszeń**: laser_combat (`fighter_damage`), drill2, laser_focus, hull_siphon (leczenie za kafelek), armor2, shield_cap, fuel_cell, strafe2, salvage (szansa na rzadki surowiec), yield2, power_mult2. Skaner przeniesiony przed Wymiarową ładownię.
 18. **Czołgi** (`kind: "tank"` w `enemies.fighters`): jeżdżą po lądzie (`world.ground_at`, `world.tank_point`), wieża za graczem, pociski artyleryjskie po łuku z celownikiem na ziemi (`enemies.shells`), ślady gąsienic, łup, osobny licznik w HUD. Spawn w `main._update_patrols` od 3. wyprawy.
-
-## Ważne miejsca w kodzie
-- `scripts/upgrades.gd` – LIST, ARMORY (bronie: rockets, drones, guns, escort), LAB, EMPIRE, `TREE`, `parent_of`, `display_pos`.
-- `scripts/game_state.gd` – BASE_STATS, STAT_NAMES, PERCENT_STATS, `is_reachable`, `requires_met`, `recalc_stats` (obsługa `grants`), klawisze `KEY_ACTIONS`.
-- `scripts/world.gd` – teren, wieżyczki, okręgi zasięgu, pociski wieżyczek, `_friendlies()` (cele pocisków wroga, w tym eskorta).
-- `scripts/enemies.gd` – myśliwce (fighter/laser/gunner) i czołgi.
-- `scripts/weapons.gd` – rakiety, drony, karabiny, błyskawica, detonacja.
-- `scripts/hud.gd`, `scripts/upgrade_screen.gd`, `scripts/fx.gd`, `scripts/main.gd`.
+19. **Porządki w kodzie (2026-11-06)**: `upgrade_screen.gd` podzielony na `scripts/dock/` (łańcuch extends), `world.gd` na `scripts/world/`; wspólne opcje w `options.gd`; pomocniki `ease_out`/`chamfer_pts`/`closed` w `Style`; usunięty martwy kod; zestaw testowy `tools/test/` (bezpieczne uruchamianie, test dymny, porównanie zrzutów); `CLAUDE.md` z mapą kodu. Wygląd i działanie bez zmian (zrzuty doku identyczne co do piksela).
 
 ## Otwarte / do obserwacji
 - Nic nie testowane na Macu.

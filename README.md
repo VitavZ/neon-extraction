@@ -20,7 +20,7 @@ Miasta i góry dalej od postoju Matki bronią wieżyczki. Zniszczenie statku = u
 Postęp zapisuje się przy każdym dokowaniu (user://neon_extraction_save_N.json, gdzie N to slot). Obok leży kopia poprzedniego zapisu (.bak), wczytywana, gdy główny plik jest uszkodzony.
 
 ## Mapa USA
-Świat to 6 sektorów po 128x128 kafelków (scripts/sectors.gd), każdy z metropolią; między sąsiednimi
+Świat to 9 sektorów (3x3) po 160x160 kafelków (scripts/sectors.gd), każdy z metropolią; między sąsiednimi
 sektorami lata się swobodnie. Węzeł Sterownia pozwala przenosić Statek Matkę.
 Teren w scripts/us_map_data.gd generuje tools/bake_us_map.gd z danych: AWS Terrain Tiles (Mapzen, m.in.
 3DEP/USGS, SRTM, GMTED, ETOPO1) oraz Natural Earth (domena publiczna).
@@ -32,6 +32,9 @@ Różowy punkt w mieście (wejście klawiszem E) pozwala powtórzyć walkę po p
 ## Pliki
 - scripts/game_state.gd — surowce, ładownia, statystyki, zapis (autoload GameState)
 - scripts/upgrades.gd — definicja siatki ulepszeń (łatwo dodać nowe węzły)
-- scripts/world.gd — generowanie mapy, kafelki, złoża, wieżyczki, minimapa
+- scripts/world.gd + scripts/world/ — generowanie mapy, kafelki, złoża, wieżyczki, minimapa
 - scripts/ship.gd — sterowanie i laser
-- scripts/mothership.gd, fx.gd, hud.gd, upgrade_screen.gd, main.gd
+- scripts/upgrade_screen.gd + scripts/dock/ — ekran Statku Matki (siatka, zbrojownia, sterownia, laboratorium, imperium)
+- scripts/mothership.gd, fx.gd, hud.gd, main.gd
+
+Pełna mapa kodu: CLAUDE.md. Testy: tools/test/.
