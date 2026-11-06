@@ -1,0 +1,14 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Buildy i archiwa (trafiają do GitHub Releases, nie do repo)
+*.zip
+*.exe
+*.pck
+*.dmg
+/builds/
+
+# Pliki testowe
+/test.gd
+/test.gd.uid

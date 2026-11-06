@@ -1,0 +1,89 @@
+TEKSTY POP-UPÓW SAMOUCZKA (scripts/tutorial.gd)
+=================================================
+
+Jak edytować:
+- Zmieniaj tylko TYTUŁ i TREŚĆ. Nagłówki "=== OKIENKO X/8 ===" i linie "Kiedy się pokazuje" zostaw (są tylko dla orientacji).
+- Pusta linia w treści = nowy akapit w okienku.
+- W nawiasach klamrowych są klawisze. Gra sama wstawia tam klawisz ustawiony w opcjach, np. {dock} -> E.
+  Dostępne: {thrust} ciąg, {brake} hamulec, {stop} pełny stop, {left} / {right} manewr w bok,
+  {drift} drift, {dock} dokowanie/wylot, {pause} pauza, {wing} wezwanie myśliwców,
+  {move} = cztery klawisze lotu naraz (np. W/A/S/D).
+- Możesz dodać nowe okienka albo usunąć istniejące, ale napisz wtedy, kiedy nowe ma się pokazywać.
+- Okienko ma ok. 620 px szerokości, więc długi tekst po prostu urośnie w górę.
+- Tekst w nawiasach kwadratowych, np. [{dock}] albo [LPM], rysuje się jako pogrubiony klawisz w ramce.
+- Linia "[klawisze] :: opis" to wiersz listy sterowania: klawisze po lewej, opis wyrównany obok.
+
+
+=== OKIENKO 1/8 ===
+Kiedy się pokazuje: na start nowej gry, w doku Statku Matki.
+TYTUŁ: CZOŁEM, KAPITANIE!
+TREŚĆ:
+Jesteś dowódcą elitarnej jednostki ekstrakcyjnej Imperium Vex. Twoja baza wypadowa to Statek Matka - tu rozładowujesz łup i ulepszasz swój okręt.
+
+Naciśnij WYLOT [{dock}], żeby wyruszyć na Ziemię.
+
+
+=== OKIENKO 2/8 ===
+Kiedy się pokazuje: zaraz po pierwszym wylocie.
+TYTUŁ: STEROWANIE
+TREŚĆ:
+Twój statek zawsze obraca się dziobem w kierunku kursora.
+
+[PPM] lub [{thrust}] :: silniki, lecisz do przodu
+[{brake}] :: hamulec
+[{stop}] :: pełny stop
+[{left}] [{right}] :: ruch w bok
+[{drift}] :: drift: przytrzymaj, by ślizgać się bokiem, a następnie puść, by wybić się do przodu. Generuje to wystrzał plazmy, który rani wszystko, czego dotknie.
+[KÓŁKO MYSZY] :: przybliżanie i oddalanie mapy
+
+
+=== OKIENKO 3/8 ===
+Kiedy się pokazuje: w locie, zaraz po okienku "Sterowanie".
+TYTUŁ: LASER
+TREŚĆ:
+Przytrzymaj [LPM], celując w kafelek, żeby go wydobyć. Z lasów pozyskasz drewno, z gór kamień, miasta to głównie złom i metal. W przypadku tych ostatnich bądź ostrożny - strzegą ich wieżyczki i ziemskie myśliwce.
+
+Pod niektórymi kafelkami kryją się cenne ZŁOŻA (miedź, żelazo, złoto...).
+
+
+=== OKIENKO 4/8 ===
+Kiedy się pokazuje: w locie, gdy w ładowni pojawi się pierwszy surowiec. Podświetla pasek ładowni.
+TYTUŁ: ŁADOWNIA
+TREŚĆ:
+Wydobyte surowce trafiają do ładowni - pasek po lewej u góry i łuk wokół statku obrazują, ile wolnego miejsca jeszcze zostało.
+
+Gdy ładownia jest pełna, nic więcej nie zbierzesz. Wtedy wracaj do bazy wypadowej.
+
+
+=== OKIENKO 5/8 ===
+Kiedy się pokazuje: w locie, gdy paliwo spadnie poniżej 75%. Podświetla pasek paliwa.
+TYTUŁ: PALIWO
+TREŚĆ:
+Lot zużywa paliwo - widać to na pasku na samym dole ekranu. Bez paliwa statek traci moc, laser gaśnie, a kadłub się rozpada. Lepiej nie sprawdzaj co się stanie, kiedy stracisz je całe.
+
+Złota strzałka z podpisem "MATKA" zawsze wskazuje drogę do domu.
+
+
+=== OKIENKO 6/8 ===
+Kiedy się pokazuje: w locie, gdy ładownia jest zapełniona w połowie albo paliwo spadnie poniżej 40%.
+TYTUŁ: CZAS WRACAĆ
+TREŚĆ:
+Leć do statku matki i naciśnij [{dock}], żeby zadokować. Ładunek zostanie przeniesiony do magazynu, a paliwo uzupełnione.
+
+
+=== OKIENKO 7/8 ===
+Kiedy się pokazuje: po pierwszym powrocie do doku (ekran ulepszeń).
+TYTUŁ: ULEPSZENIA
+TREŚĆ:
+Kliknij kafelek ulepszeń na siatce, żeby je wykupić za zebrane surowce. 
+
+Siatkę przesuwasz myszką, kółkiem przybliżasz i oddalasz.
+
+
+=== OKIENKO 8/8 ===
+Kiedy się pokazuje: w locie, gdy statek pierwszy raz oberwie albo pojawi się wrogi myśliwiec.
+TYTUŁ: UWAGA - ZIEMIA KONTRATAKUJE!
+TREŚĆ:
+Miast bronią wieżyczki, a niszczenie miast ściąga ziemskie myśliwce. Możesz je zestrzelić laserem.
+
+Zniszczenie statku oznacza utratę całego ładunku - pilnuj kadłuba!
