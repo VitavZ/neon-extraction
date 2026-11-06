@@ -11,6 +11,11 @@ Godot 4.7.2, GDScript, wszystko rysowane w `_draw()` (kolory HDR, styl neon/synt
 - Sprawdzenie składni: `--headless --check-only --script res://scripts/X.gd` (błąd „Identifier not found: GameState” jest tam normalny).
 - PowerShell: edycje plików UTF-8 bez BOM; nie nazywać funkcji `R`/`Rp` (aliasy).
 
+## Repozytorium i wydania
+- Prywatne repo: https://github.com/VitavZ/neon-extraction (gałąź `main`). Aktualna wersja: **v0.3.0** (`menu.gd: VERSION`, wersje w `export_presets.cfg`).
+- `git` nie jest w PATH – używać tego z GitHub Desktop: `$env:PATH = "C:\Users\Kamil\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd;$env:PATH"`; push przez `git -c credential.helper= -c "credential.helper=!gh auth git-credential" push`.
+- Eksport: `Godot_v4.7.2-stable_win64_console.exe --headless --path . --export-release "Windows Desktop" <ścieżka.exe>` (i `"macOS" <ścieżka.zip>`). Buildy w `..\builds\vX.Y.Z\`, wrzucane jako GitHub Release (`gh release create`), nie do repo.
+
 ## Zrobione funkcje (w kolejności)
 1. **Podgląd łupu przy kopaniu** – panel nad kafelkiem (`hud._draw_mine_info`, `world.tile_drops_preview`, `world.hidden_deposit_name`).
 2. **Znacznik „NAMIERZONY”** – czerwona ramka ekranu i licznik pościgu (`hud._draw_tracking`, `enemies.chasers()`).
