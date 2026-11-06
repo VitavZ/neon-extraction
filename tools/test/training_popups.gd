@@ -53,8 +53,10 @@ func _run() -> void:
 	_expect("powitanie w doku", tut.showing and tut.cstep == 0)
 	await _close()
 	main.launch()
+	if tr.phase == tr.CONTROLS:
+		tr.skip_controls()   # ćwiczenia sterowania sprawdza training_controls.gd
 	await _wait(2.0)
-	_expect("zadanie surowców w locie", tut.showing and tut.cstep == 1)
+	_expect("zadanie surowców w locie", tut.showing and tut.cstep == tr.MAIN_STEP)
 	await _close()
 	# za mało surowców: 10 biomasy, 5 kamienia
 	gs.add_cargo("biomass", 10)
@@ -63,6 +65,8 @@ func _run() -> void:
 	await _wait(2.5)
 	_expect("dok bez surowców: faza GATHER, brak okienka o ulepszeniu", tr.phase == tr.GATHER and not tut.showing)
 	main.launch()
+	if tr.phase == tr.CONTROLS:
+		tr.skip_controls()   # ćwiczenia sterowania sprawdza training_controls.gd
 	await _wait(2.5)
 	_expect("ponowny lot: nadal bez okienek o tarczy i odbudowie", tr.phase == tr.GATHER and not tut.showing)
 	_expect("tarcza Roswell nadal stoi", not main.world.protected.is_empty())
@@ -71,11 +75,11 @@ func _run() -> void:
 	gs.add_cargo("stone", 25)
 	main.dock("test", true, true)
 	await _wait(2.0)
-	_expect("dok z surowcami: faza UPGRADE i okienko 'ulepsz laser'", tr.phase == tr.UPGRADE and tut.showing and tut.cstep == 2)
+	_expect("dok z surowcami: faza UPGRADE i okienko 'ulepsz laser'", tr.phase == tr.UPGRADE and tut.showing and tut.cstep == tr.MAIN_STEP + 1)
 	await _close()
 	gs.buy(Upgrades.by_id("laser_dmg"))
 	await _wait(2.0)
-	_expect("po zakupie: faza DESTROY i okienko o tarczy", tr.phase == tr.DESTROY and tut.showing and tut.cstep == 3)
+	_expect("po zakupie: faza DESTROY i okienko o tarczy", tr.phase == tr.DESTROY and tut.showing and tut.cstep == tr.MAIN_STEP + 2)
 	await _close()
 	await _wait(2.0)
 	_expect("Roswell stoi: brak okienka o odbudowie", tr.phase == tr.DESTROY and not tut.showing)

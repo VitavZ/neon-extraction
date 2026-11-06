@@ -32,7 +32,7 @@ func _shot(name: String) -> void:
 
 
 func _phase_name() -> String:
-	return ["GATHER", "UPGRADE", "DESTROY", "UNLOCK", "REBUILD", "SIEGE", "CALM", "DANGER", "BOSS", "DEFEAT", "VEX", "DONE"][tr.phase]
+	return ["CONTROLS", "GATHER", "UPGRADE", "DESTROY", "UNLOCK", "REBUILD", "SIEGE", "CALM", "DANGER", "BOSS", "DEFEAT", "VEX", "DONE"][tr.phase]
 
 
 func _key(code: int) -> void:
@@ -73,6 +73,8 @@ func _run() -> void:
 	# od teraz okienka nie pauzują testu
 	main.tutorial.custom_cond = func(_s): return false
 	main.launch()
+	if tr.phase == tr.CONTROLS:
+		tr.skip_controls()   # ćwiczenia sterowania sprawdza training_controls.gd
 	await _wait(2.0)
 	await _shot("t02_flight_area")
 	main.ship.position = tr.town_center + Vector2(300, 250)
@@ -89,6 +91,8 @@ func _run() -> void:
 	await _wait(0.5)
 	_log("po zakupie lasera (%d): %s" % [gs.stat("laser_dps"), _phase_name()])
 	main.launch()
+	if tr.phase == tr.CONTROLS:
+		tr.skip_controls()   # ćwiczenia sterowania sprawdza training_controls.gd
 	await _wait(0.5)
 	main.ship.position = tr.town_center + Vector2(300, 250)
 	await _wait(1.0)
@@ -105,6 +109,8 @@ func _run() -> void:
 	await _wait(0.5)
 	_log("zakup odbudowy: %s, faza %s" % [ok, _phase_name()])
 	main.launch()
+	if tr.phase == tr.CONTROLS:
+		tr.skip_controls()   # ćwiczenia sterowania sprawdza training_controls.gd
 	await _wait(0.5)
 	main.ship.position = tr.town_center + Vector2(300, 250)
 	main.ship.tool = 3

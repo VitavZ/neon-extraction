@@ -32,14 +32,43 @@ const COSTS := {
 	"rebuild": {"scrap": 30, "metal": 15},
 }
 
-enum { GATHER, UPGRADE, DESTROY, UNLOCK, REBUILD, SIEGE, CALM, DANGER, BOSS, DEFEAT, VEX, DONE }
+enum { CONTROLS, GATHER, UPGRADE, DESTROY, UNLOCK, REBUILD, SIEGE, CALM, DANGER, BOSS, DEFEAT, VEX, DONE }
+## Ćwiczenia sterowania (faza CONTROLS): każde ma okienko STEPS[1 + nr] i zalicza się dopiero, gdy gracz sam to zrobi.
+## [id, cel na dole ekranu]
+const DRILLS := [
+	["aim", "obróć statek kursorem dookoła"],
+	["thrust", "leć z włączonym ciągiem [PPM] / [{thrust}]"],
+	["brake", "rozpędź się i wyhamuj [{brake}] albo [{stop}]"],
+	["strafe", "leć w bok [{left}] / [{right}]"],
+	["drift", "naładuj drift [{drift}] i puść"],
+	["zoom", "przybliż albo oddal widok kółkiem myszy"],
+	["laser", "rozbij laserem [LPM] 3 kafelki"],
+	["rocket", "odpal rakietę [{rocket}]"],
+]
+const MAIN_STEP := 9                 # pierwsze okienko po ćwiczeniach (1 + DRILLS.size())
 ## Pierwsze okienko każdej fazy (gdy gracz wyprzedzi okienka, samouczek przeskakuje do bieżącego).
-const PHASE_STEP := {GATHER: 0, UPGRADE: 2, DESTROY: 3, UNLOCK: 4, REBUILD: 5, SIEGE: 6}
+const PHASE_STEP := {GATHER: MAIN_STEP, UPGRADE: MAIN_STEP + 1, DESTROY: MAIN_STEP + 2, UNLOCK: MAIN_STEP + 3, REBUILD: MAIN_STEP + 4, SIEGE: MAIN_STEP + 5}
 
 ## [tytuł, tekst, podświetlenie, ikona] - format tutorial.gd
 const STEPS := [
 	["SZKOLENIE: ROSWELL",
-		"Witaj w ośrodku szkoleniowym Imperium Vex, Kadecie. Dostajesz okręt, który już przeszedł kilka modernizacji: mocny kadłub, tarcza, rakiety [{rocket}] i drony.\n\nTwój cel to Roswell - małe ziemskie miasto na zachód od Statku Matki. Naciśnij WYLOT [{dock}].", "", "crown"],
+		"Witaj w ośrodku szkoleniowym Imperium Vex, Kadecie. Dostajesz okręt, który już przeszedł kilka modernizacji: mocny kadłub, tarcza, rakiety [{rocket}] i drony.\n\nTwój cel to Roswell - małe ziemskie miasto na zachód od Statku Matki. Najpierw jednak krótki trening sterowania.\n\nNaciśnij WYLOT [{dock}].", "", "crown"],
+	["STEROWANIE: OBRÓT",
+		"Twój statek zawsze obraca się dziobem w stronę kursora myszy.\n\nPoruszaj myszą i obróć statek dookoła.", "", "rotate"],
+	["STEROWANIE: CIĄG",
+		"Przytrzymaj [PPM] lub [{thrust}], żeby włączyć silniki. Statek leci tam, gdzie patrzy dziób, i zachowuje pęd także po puszczeniu klawisza - jak w kosmosie.\n\nPoleć kawałek z włączonym ciągiem.", "", "warp"],
+	["STEROWANIE: HAMOWANIE",
+		"[{brake}] :: hamulec - zwalnia stopniowo\n[{stop}] :: pełny stop - zatrzymuje statek w miejscu\n\nRozpędź się i wyhamuj.", "", "shield"],
+	["STEROWANIE: MANEWRY",
+		"[{left}] [{right}] :: lot w bok bez obracania dzioba\n\nTo podstawa unikania pocisków: dziób celuje we wroga, a Ty przesuwasz się w bok. Spróbuj.", "", "rotate"],
+	["STEROWANIE: DRIFT",
+		"Przytrzymaj [{drift}] - statek ślizga się bokiem i ładuje zryw. Puść, a wystrzeli w stronę kursora, raniąc plazmą wszystko, czego dotknie.\n\nNaładuj drift i puść.", "", "bolt"],
+	["STEROWANIE: WIDOK",
+		"[KÓŁKO MYSZY] :: przybliżanie i oddalanie widoku\n\nOddal widok, żeby zobaczyć więcej okolicy, albo przybliż, żeby celować dokładniej.", "", "warp"],
+	["LASER GÓRNICZY",
+		"Przytrzymaj [LPM], celując w kafelek, żeby go rozbić i zebrać surowiec. Laser sięga tylko na pewną odległość od statku.\n\nRozbij 3 dowolne kafelki.", "", "bolt"],
+	["RAKIETY",
+		"[{rocket}] odpala rakietę w stronę kursora. Wybuch rani kafelki i wrogów w promieniu kilku kafelków, a rakiety ładują się same (do 3 w zapasie).\n\nOdpal rakietę.", "", "bolt"],
 	["ZADANIE: SUROWCE",
 		"Roswell osłania tarcza energetyczna. Przebije ją dopiero laser o mocy co najmniej 80, a Twój ma 60.\n\nZbierz 40 biomasy (równiny) i 30 kamienia (góry), wróć do Statku Matki [{dock}] i dokup ostatni poziom MOCY LASERA. Cel widzisz na dole ekranu.", "cargo", "crate"],
 	["ULEPSZ LASER",
@@ -77,7 +106,14 @@ var main: Node2D
 var world: Node2D
 var ship: Node2D
 var tutorial: Control
-var phase := GATHER
+var phase := CONTROLS
+var drill := 0                        # bieżące ćwiczenie sterowania
+var drill_init := -1
+var drill_acc := 0.0
+var drill_rot := 0.0
+var drill_zoom := 1.0
+var drill_ammo := 0
+var drill_flag := false
 var t := 0.0                          # czas fazy
 var time := 0.0
 var town: Array = []                  # kafelki Roswell
@@ -110,7 +146,8 @@ func setup() -> void:
 	z_index = 4
 	var c := Sectors.cell_of(ROSWELL_LONLAT)
 	# jeden obszar, jedno miasto: inne miasteczka z prawdziwej mapy znikają
-	world.clear_towns(AREA)
+	# z zapasem: wieżyczki rakietowe zza granicy sięgałyby do środka obszaru
+	world.clear_towns(AREA.grow(24))
 	town = world.stamp_town(c, TOWN_R, TOWN_TURRETS, GameState.world_seed)
 	town_center = Vector2(c.x * world.T + world.T * 0.5, c.y * world.T + world.T * 0.5)
 	for i in town:
@@ -135,6 +172,8 @@ func setup() -> void:
 	# HUD: jeden obszar zamiast sektorów USA, na minimapie tylko Roswell
 	main.hud.custom_view = {"rect": AREA, "title": "OBSZAR SZKOLENIA", "city": "ROSWELL", "city_pos": town_center,
 		"destroyed": destroyed_frac, "rebuilt": rebuilt_frac}
+	ship.drift_released.connect(_on_drift_released)
+	world.tile_destroyed.connect(_on_tile_destroyed)
 	tutorial = main.tutorial
 	tutorial.custom = true
 	tutorial.steps = STEPS
@@ -169,19 +208,24 @@ func _go(p: int) -> void:
 
 
 ## Faza, od której wolno pokazać dane okienko (okienko nie może wyprzedzać prawdziwego postępu).
-const STEP_PHASE := [GATHER, GATHER, UPGRADE, DESTROY, UNLOCK, REBUILD, SIEGE]
+const STEP_PHASE := [GATHER, UPGRADE, DESTROY, UNLOCK, REBUILD, SIEGE]
 
 
 func _popup_cond(step: int) -> bool:
-	if step >= STEP_PHASE.size() or phase < STEP_PHASE[step]:
-		return false
 	var docked: bool = ship.docked
-	match step:
-		0: return docked
-		1: return not docked
-		2: return docked
-		3, 4: return true
-		5, 6: return not docked
+	if step == 0:
+		return phase == CONTROLS and docked
+	if step < MAIN_STEP:
+		# ćwiczenie: tylko w locie i tylko to, które jest teraz do zrobienia
+		return phase == CONTROLS and not docked and drill == step - 1
+	var k := step - MAIN_STEP
+	if k >= STEP_PHASE.size() or phase < STEP_PHASE[k]:
+		return false
+	match k:
+		0: return not docked
+		1: return docked
+		2, 3: return true
+		4, 5: return not docked
 	return false
 
 
@@ -220,9 +264,14 @@ func _process(delta: float) -> void:
 	t += delta
 	shield_drop = maxf(-1.0, shield_drop - delta) if shield_drop > 0.0 else shield_drop
 	# okienka nie mogą utknąć na fazie, którą gracz już przeszedł
-	if PHASE_STEP.has(phase) and not tutorial.showing and tutorial.cstep < PHASE_STEP[phase]:
-		tutorial.cstep = PHASE_STEP[phase]
+	var need: int = PHASE_STEP.get(phase, 0)
+	if phase == CONTROLS:
+		need = 0 if ship.docked and GameState.sorties == 0 else 1 + drill
+	if not tutorial.showing and tutorial.cstep < need:
+		tutorial.cstep = need
 	match phase:
+		CONTROLS:
+			_update_drill(delta)
 		GATHER:
 			if GameState.stat("laser_dps") >= LASER_GATE:
 				_drop_shield()
@@ -278,6 +327,101 @@ func _process(delta: float) -> void:
 				get_tree().paused = true
 	queue_redraw()
 	boss_view.queue_redraw()
+
+
+# ---------------- ćwiczenia sterowania ----------------
+
+## Ćwiczenie liczy się dopiero po przeczytaniu (zamknięciu) jego okienka.
+func _drill_active() -> bool:
+	return phase == CONTROLS and drill < DRILLS.size() and not ship.docked and not ship.dead \
+		and not tutorial.showing and tutorial.cstep == drill + 2
+
+
+func _drill_id() -> String:
+	return String(DRILLS[drill][0]) if drill < DRILLS.size() else ""
+
+
+func _update_drill(delta: float) -> void:
+	if not _drill_active():
+		return
+	if drill_init != drill:
+		drill_init = drill
+		drill_acc = 0.0
+		drill_flag = false
+		drill_rot = ship.rotation
+		drill_zoom = main.zoom_target
+		drill_ammo = main.weapons.rocket_ammo
+	match _drill_id():
+		"aim":
+			drill_acc += absf(angle_difference(drill_rot, ship.rotation))
+			drill_rot = ship.rotation
+			if drill_acc >= TAU:
+				_drill_done()
+		"thrust":
+			if ship.thrusting:
+				drill_acc += delta
+			if drill_acc >= 2.0:
+				_drill_done()
+		"brake":
+			if (GameState.key_down("brake") or ship.stopping) and ship.vel.length() > 60.0:
+				drill_acc += delta
+			if drill_acc >= 0.6:
+				_drill_done()
+		"strafe":
+			if ship.strafing != 0.0:
+				drill_acc += delta
+			if drill_acc >= 1.0:
+				_drill_done()
+		"drift", "laser":
+			if drill_flag:
+				_drill_done()
+		"zoom":
+			if absf(main.zoom_target - drill_zoom) > 0.05:
+				_drill_done()
+		"rocket":
+			if main.weapons.rocket_ammo < drill_ammo:
+				_drill_done()
+			drill_ammo = maxi(drill_ammo, main.weapons.rocket_ammo)
+
+
+## Postęp bieżącego ćwiczenia 0..1 (do celu na dole ekranu).
+func _drill_progress() -> float:
+	match _drill_id():
+		"aim": return drill_acc / TAU
+		"thrust": return drill_acc / 2.0
+		"brake": return drill_acc / 0.6
+		"strafe": return drill_acc / 1.0
+		"laser": return drill_acc / 3.0
+	return 0.0
+
+
+func _drill_done() -> void:
+	Audio.play("research_done", 0.0)
+	main.fx.float_text(ship.global_position + Vector2(0, -40), "ZALICZONE!", Color(0.45, 1.3, 0.55))
+	main.fx.ring(ship.global_position, Color(0.45, 1.2, 0.55, 0.8), 70.0, 0.45)
+	main.hud.message("Zaliczone: " + GameState.keys_text(String(DRILLS[drill][1])).replace("[", "").replace("]", ""), Color(0.45, 1.0, 0.55))
+	drill += 1
+	if drill >= DRILLS.size():
+		_go(GATHER)
+		main.hud.show_big("STEROWANIE OPANOWANE", "Czas na prawdziwe zadanie")
+
+
+func _on_drift_released(_charge: float) -> void:
+	if _drill_active() and _drill_id() == "drift":
+		drill_flag = true
+
+
+func _on_tile_destroyed(_idx: int, _pos: Vector2, _drops: Dictionary, _info: String) -> void:
+	if _drill_active() and _drill_id() == "laser":
+		drill_acc += 1.0
+		if drill_acc >= 3.0:
+			drill_flag = true
+
+
+## Testy: pomija ćwiczenia sterowania.
+func skip_controls() -> void:
+	drill = DRILLS.size()
+	_go(GATHER)
 
 
 func _drop_shield() -> void:
@@ -464,7 +608,7 @@ func _update_boss(delta: float) -> void:
 func _draw() -> void:
 	var pr: Rect2 = world.play_rect
 	var big := Rect2(-4000, -4000, world.N * world.T + 8000, world.H * world.T + 8000)
-	var dark := Color(0.0, 0.0, 0.02, 0.62)
+	var dark := Color(0.0, 0.0, 0.02, 0.86)
 	draw_rect(Rect2(big.position, Vector2(big.size.x, pr.position.y - big.position.y)), dark)
 	draw_rect(Rect2(Vector2(big.position.x, pr.end.y), Vector2(big.size.x, big.end.y - pr.end.y)), dark)
 	draw_rect(Rect2(Vector2(big.position.x, pr.position.y), Vector2(pr.position.x - big.position.x, pr.size.y)), dark)
@@ -640,6 +784,12 @@ func _draw_ui() -> void:
 
 func _objective() -> String:
 	match phase:
+		CONTROLS:
+			if not _drill_active():
+				return ""
+			var goal := GameState.keys_text(String(DRILLS[drill][1])).replace("[", "").replace("]", "")
+			var pr := _drill_progress()
+			return "STEROWANIE %d/%d: %s%s" % [drill + 1, DRILLS.size(), goal, ("  —  %d%%" % int(clampf(pr, 0.0, 1.0) * 100.0)) if pr > 0.0 else ""]
 		GATHER:
 			var need: Dictionary = COSTS["laser_dmg"]
 			return "CEL: zbierz %d/%d biomasy i %d/%d kamienia, potem wróć do Statku Matki" % [
