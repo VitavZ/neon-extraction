@@ -1,0 +1,298 @@
+TEKSTY SZKOLENIA W ROSWELL (TUTORIAL w menu) - scripts/training.gd
+=====================================================================
+
+Jak edytować:
+- Zmieniaj tylko TYTUŁ, TREŚĆ i teksty w częściach 2-4. Nagłówki "=== ... ===" i linie "Kiedy się pokazuje" zostaw.
+- Pusta linia w treści = nowy akapit w okienku.
+- W nawiasach klamrowych są klawisze - gra sama wstawia klawisz ustawiony w opcjach, np. {dock} -> E.
+  Dostępne: {thrust} ciąg, {brake} hamulec, {stop} pełny stop, {left} / {right} manewr w bok, {drift} drift,
+  {dock} dokowanie/wylot, {rocket} rakieta, {tool3} odbudowa, {pause} pauza.
+- Tekst w nawiasach kwadratowych, np. [{dock}] albo [LPM], rysuje się jako klawisz w ramce.
+- Linia "[klawisze] :: opis" to wiersz listy sterowania: klawisze po lewej, opis obok.
+- Okienko ma ok. 620 px szerokości - długi tekst po prostu urośnie w górę.
+- Napisy "TYTUŁ / podpis" w części 3 to duży napis na środku ekranu i mniejszy pod nim.
+
+
+########## CZĘŚĆ 1: OKIENKA (pop-upy) ##########
+
+=== OKIENKO 1/15 ===
+Kiedy się pokazuje: na start szkolenia, w doku Statku Matki.
+TYTUŁ: SZKOLENIE: ROSWELL
+TREŚĆ:
+Witaj w ośrodku szkoleniowym Imperium Vex, Kadecie. Dostajesz okręt, który już przeszedł kilka modernizacji: mocny kadłub, tarcza, rakiety [{rocket}] i drony.
+
+Twój cel to Roswell - małe ziemskie miasto na zachód od Statku Matki. Najpierw jednak krótki trening sterowania.
+
+Naciśnij WYLOT [{dock}].
+
+
+=== OKIENKO 2/15 ===
+Kiedy się pokazuje: w locie, ćwiczenie sterowania 1/8 (zalicza: pełny obrót statku kursorem).
+TYTUŁ: STEROWANIE: OBRÓT
+TREŚĆ:
+Twój statek zawsze obraca się dziobem w stronę kursora myszy.
+
+Poruszaj myszą i obróć statek dookoła.
+
+
+=== OKIENKO 3/15 ===
+Kiedy się pokazuje: w locie, ćwiczenie 2/8 (zalicza: 2 s lotu z włączonym ciągiem).
+TYTUŁ: STEROWANIE: CIĄG
+TREŚĆ:
+Przytrzymaj [PPM] lub [{thrust}], żeby włączyć silniki. Statek leci tam, gdzie patrzy dziób, i zachowuje pęd także po puszczeniu klawisza - jak w kosmosie.
+
+Poleć kawałek z włączonym ciągiem.
+
+
+=== OKIENKO 4/15 ===
+Kiedy się pokazuje: w locie, ćwiczenie 3/8 (zalicza: hamowanie hamulcem lub pełnym stopem z rozpędu).
+TYTUŁ: STEROWANIE: HAMOWANIE
+TREŚĆ:
+[{brake}] :: hamulec - zwalnia stopniowo
+[{stop}] :: pełny stop - zatrzymuje statek w miejscu
+
+Rozpędź się i wyhamuj.
+
+
+=== OKIENKO 5/15 ===
+Kiedy się pokazuje: w locie, ćwiczenie 4/8 (zalicza: 1 s lotu w bok).
+TYTUŁ: STEROWANIE: MANEWRY
+TREŚĆ:
+[{left}] [{right}] :: lot w bok bez obracania dzioba
+
+To podstawa unikania pocisków: dziób celuje we wroga, a Ty przesuwasz się w bok. Spróbuj.
+
+
+=== OKIENKO 6/15 ===
+Kiedy się pokazuje: w locie, ćwiczenie 5/8 (zalicza: puszczenie naładowanego driftu).
+TYTUŁ: STEROWANIE: DRIFT
+TREŚĆ:
+Przytrzymaj [{drift}] - statek ślizga się bokiem i ładuje zryw. Puść, a wystrzeli w stronę kursora, raniąc plazmą wszystko, czego dotknie.
+
+Naładuj drift i puść.
+
+
+=== OKIENKO 7/15 ===
+Kiedy się pokazuje: w locie, ćwiczenie 6/8 (zalicza: przybliżenie lub oddalenie kółkiem).
+TYTUŁ: STEROWANIE: WIDOK
+TREŚĆ:
+[KÓŁKO MYSZY] :: przybliżanie i oddalanie widoku
+
+Oddal widok, żeby zobaczyć więcej okolicy, albo przybliż, żeby celować dokładniej.
+
+
+=== OKIENKO 8/15 ===
+Kiedy się pokazuje: w locie, ćwiczenie 7/8 (zalicza: 3 rozbite kafelki).
+TYTUŁ: LASER GÓRNICZY
+TREŚĆ:
+Przytrzymaj [LPM], celując w kafelek, żeby go rozbić i zebrać surowiec. Laser sięga tylko na pewną odległość od statku.
+
+Rozbij 3 dowolne kafelki.
+
+
+=== OKIENKO 9/15 ===
+Kiedy się pokazuje: w locie, ćwiczenie 8/8 (zalicza: odpalenie rakiety).
+TYTUŁ: RAKIETY
+TREŚĆ:
+[{rocket}] odpala rakietę w stronę kursora. Wybuch rani kafelki i wrogów w promieniu kilku kafelków, a rakiety ładują się same (do 3 w zapasie).
+
+Odpal rakietę.
+
+
+=== OKIENKO 10/15 ===
+Kiedy się pokazuje: w locie, po ćwiczeniach sterowania. Podświetla pasek ładowni.
+TYTUŁ: ZADANIE: SUROWCE
+TREŚĆ:
+Roswell osłania tarcza energetyczna. Przebije ją dopiero laser o mocy co najmniej 80, a Twój ma 60.
+
+Zbierz 40 biomasy (równiny) i 30 kamienia (góry), wróć do Statku Matki [{dock}] i dokup ostatni poziom MOCY LASERA. Cel widzisz na dole ekranu.
+
+
+=== OKIENKO 11/15 ===
+Kiedy się pokazuje: w doku, gdy w magazynie są surowce na ulepszenie lasera.
+TYTUŁ: ULEPSZ LASER
+TREŚĆ:
+Masz surowce. Na siatce ulepszeń kliknij węzeł MOC LASERA (nad rdzeniem) i kup ostatni poziom.
+
+Ostatni poziom każdego węzła daje premię MISTRZOSTWA - moc lasera skoczy do 80.
+
+
+=== OKIENKO 12/15 ===
+Kiedy się pokazuje: po kupieniu ostatniego poziomu Mocy lasera (tarcza Roswell gaśnie).
+TYTUŁ: TARCZA ROSWELL PADŁA
+TREŚĆ:
+Laser jest wystarczająco silny - tarcza miasta zgasła.
+
+Zniszcz całe Roswell. Uważaj na wieżyczki: czerwone okręgi to ich zasięg, a wieżyczki rakietowe wystrzeliwują pociski namierzające. Pomagaj sobie rakietami [{rocket}].
+
+
+=== OKIENKO 13/15 ===
+Kiedy się pokazuje: po zniszczeniu całego Roswell.
+TYTUŁ: ODBUDOWA
+TREŚĆ:
+Roswell leży w gruzach. Imperium nie niszczy jednak bez celu - z ruin budujemy własne miasta.
+
+Wróć na Statek Matkę [{dock}] i odblokuj ODBUDOWĘ: siatka ulepszeń, gałąź ŁADOWNIA -> KOMPRESJA -> ODBUDOWA. Surowce z miasta wystarczą.
+
+
+=== OKIENKO 14/15 ===
+Kiedy się pokazuje: w locie, po odblokowaniu Odbudowy.
+TYTUŁ: ODBUDUJ ROSWELL
+TREŚĆ:
+Wybierz narzędzie odbudowy [{tool3}] i przytrzymaj [LPM] na gruzach miasta. Każdy odbudowany kafelek staje się kafelkiem Imperium.
+
+Odbuduj 80% Roswell. Zwykle każdy kafelek kosztuje surowce - w szkoleniu odbudowę funduje Imperium.
+
+
+=== OKIENKO 15/15 ===
+Kiedy się pokazuje: w locie, gdy myśliwce atakują Statek Matkę (po odbudowie 80% Roswell).
+TYTUŁ: ZIEMIA KONTRATAKUJE
+TREŚĆ:
+Ziemianie nie odpuszczą utraty miasta - eskadra myśliwców atakuje Statek Matkę!
+
+Leć jej bronić i zestrzel wszystkie myśliwce. Do końca walki hangar pozostaje zamknięty.
+
+
+########## CZĘŚĆ 2: CELE ĆWICZEŃ STEROWANIA (pasek na dole ekranu) ##########
+
+ĆWICZENIE 1: obróć statek kursorem dookoła
+ĆWICZENIE 2: leć z włączonym ciągiem [PPM] / [{thrust}]
+ĆWICZENIE 3: rozpędź się i wyhamuj [{brake}] albo [{stop}]
+ĆWICZENIE 4: leć w bok [{left}] / [{right}]
+ĆWICZENIE 5: naładuj drift [{drift}] i puść
+ĆWICZENIE 6: przybliż albo oddal widok kółkiem myszy
+ĆWICZENIE 7: rozbij laserem [LPM] 3 kafelki
+ĆWICZENIE 8: odpal rakietę [{rocket}]
+
+
+########## CZĘŚĆ 3: POZOSTAŁE NAPISY W SZKOLENIU ##########
+
+Menu główne - przycisk:
+TUTORIAL
+
+Nagłówek okienek:
+SZKOLENIE
+
+Raport w doku na start:
+Szkolenie: Roswell. Powodzenia, Kadecie.
+
+Nagłówek doku (sektor):
+ROSWELL (SZKOLENIE)
+
+Napis na mapie nad miastem:
+ROSWELL
+
+Panel pod minimapą - tytuł:
+OBSZAR SZKOLENIA
+
+Panel pod minimapą - paski:
+ZNISZCZENIE ROSWELL / ODBUDOWA ROSWELL
+
+Strzałka przy krawędzi ekranu:
+ROSWELL
+
+Napis nad statkiem po ćwiczeniu:
+ZALICZONE!
+
+Komunikat po ćwiczeniu (dalej cel ćwiczenia):
+Zaliczone: ...
+
+Cel na dole ekranu - ćwiczenia:
+STEROWANIE 1/8: <cel ćwiczenia>  —  45%
+
+Cel na dole ekranu - zbieranie:
+CEL: zbierz 0/40 biomasy i 0/30 kamienia, potem wróć do Statku Matki
+
+Cel na dole ekranu - ulepszenie (w locie):
+CEL: zadokuj [{dock}] i kup ostatni poziom MOCY LASERA
+
+Cel na dole ekranu - niszczenie:
+CEL: zniszcz Roswell  —  40%
+
+Cel na dole ekranu - odblokowanie:
+CEL: wróć na Statek Matkę i odblokuj ODBUDOWĘ
+
+Cel na dole ekranu - odbudowa:
+CEL: odbuduj Roswell narzędziem [{tool3}]  —  35% / 80%
+
+Cel na dole ekranu - obrona:
+CEL: obroń Statek Matkę  —  myśliwce: 5
+
+Duży napis po ćwiczeniach:
+STEROWANIE OPANOWANE / Czas na prawdziwe zadanie
+
+Duży napis po zgaśnięciu tarczy (w locie):
+TARCZA ROSWELL ZGASŁA / Zniszcz miasto
+
+Raport w doku po zakupie lasera:
+Laser przebije tarczę Roswell. Leć zniszczyć miasto!
+
+Duży napis po zniszczeniu:
+ROSWELL ZNISZCZONE / Wróć na Statek Matkę i odblokuj Odbudowę
+
+Raport w doku, gdy łup przepadł:
+Imperium przysłało surowce na Odbudowę.
+
+Duży napis - atak na Matkę:
+ZIEMIA KONTRATAKUJE! / Statek Matka pod ostrzałem — leć jej bronić!
+
+Duży napis - atak odparty:
+ATAK ODPARTY / Statek Matka ocalał
+
+Próba dokowania od ataku do końca:
+HANGAR ZABLOKOWANY — nie ma odwrotu!
+
+Pauza -> powrót na Matkę od ataku do końca:
+Nie ma odwrotu — walcz!
+
+Ostrzeżenie - wielki napis:
+DANGER!
+
+Ostrzeżenie - podpis:
+NIEZIDENTYFIKOWANY OBIEKT NA KURSIE KOLIZYJNYM
+
+Boss - nazwa (duży napis i pasek):
+OBIEKT-51
+
+Boss - podpis przy wejściu:
+Ziemska broń z hangarów Strefy 51
+
+Boss - pod paskiem, gdy pancerz się łata:
+PANCERZ REGENERUJE SIĘ
+
+Boss - działo główne (duży napis):
+DZIAŁO GŁÓWNE / OBIEKT-51 ładuje rdzeń — nie ma ucieczki
+
+Transmisja - nagłówek:
+TRANSMISJA PRIORYTETOWA  //  KANAŁ DOWÓDZTWA
+
+Transmisja - tytuł:
+IMPERIUM VEX
+
+Transmisja - przyciski:
+DALEJ  [ENTER]  /  ODCZYTANO  [ENTER]
+
+Koniec - tytuł:
+SZKOLENIE UKOŃCZONE
+
+Koniec - treść:
+Poznałeś wydobycie, ulepszenia, niszczenie i odbudowę miast. Prawdziwa inwazja czeka - START w menu głównym.
+
+Koniec - osiągnięcie:
+OSIĄGNIĘCIE: ABSOLWENT ROSWELL
+
+Koniec - przycisk:
+MENU GŁÓWNE  [ENTER]
+
+Osiągnięcie - nazwa:
+Absolwent Roswell
+
+Osiągnięcie - opis:
+Ukończ szkolenie w Roswell (TUTORIAL w menu).
+
+
+########## CZĘŚĆ 4: TRANSMISJA OD IMPERIUM VEX (po przegranej z bossem) ##########
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
