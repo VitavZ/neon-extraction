@@ -62,6 +62,7 @@ const SIEGE_MIN := 300.0
 const SIEGE_MAX := 600.0
 const SIEGE_LOSS := 0.3          # część zapasów z magazynu tracona przy zniszczeniu Statku Matki
 var siege_timer := randf_range(SIEGE_MIN, SIEGE_MAX)
+var siege_warned := false
 
 
 func _ready() -> void:
@@ -195,6 +196,7 @@ func _ready() -> void:
 	hud.mothership = mothership
 	hud.weapons = weapons
 	hud.wingmen = wingmen
+	hud.miners = miners
 	hud.transit = transit
 	hud_layer.add_child(hud)
 
@@ -294,56 +296,71 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		if GameState.key_hit(event, "dock"):
-			if ship.docked:
-				launch()
-			elif not ship.dead and ship.position.distance_to(mothership.position) < mothership.DOCK_RADIUS:
-				if training_ctl != null and not training_ctl.can_dock():
-					hud.message("HANGAR ZABLOKOWANY — nie ma odwrotu!", Color(1.0, 0.3, 0.3))
-				elif mothership.wrecked:
-					hud.message("STATEK MATKA W GRUZACH — odbudowa za %ds" % int(ceil(mothership.wreck_t)), Color(1.0, 0.3, 0.3))
-				elif enemies.any_within(ship.position, HANGAR_LOCK_RADIUS):
-					hud.message("HANGAR ZAMKNIĘTY — zgub lub zestrzel myśliwce!", Color(1.0, 0.3, 0.3))
-				else:
-					dock("Powrót z wyprawy zakończony sukcesem.", false, true)
-			elif not ship.dead and world.boss_portal_at(ship.position) >= 0:
-				# wejście do walki tylko na życzenie gracza
-				start_boss(world.boss_portal_at(ship.position))
-		elif GameState.key_hit(event, "tool1"):
-			ship.tool = 1
-			hud.message(GameState.keys_text("[{tool1}] Laser górniczy"), Color(1.0, 0.5, 0.85))
-		elif GameState.key_hit(event, "tool2"):
-			if GameState.stat("lab") > 0.0:
-				ship.tool = 2
-				hud.message(GameState.keys_text("[{tool2}] Promień porywania: miasta = ludzie, pola = krowy, lasy = jelenie"), Color(0.5, 1.0, 0.6))
+	if event is InputEventMouseButton and event.pressed and not ship.docked:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			zoom_target = clampf(zoom_target * 1.12, 0.35, 2.2)
+			return
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			zoom_target = clampf(zoom_target / 1.12, 0.35, 2.2)
+			return
+	if event is InputEventKey and event.pressed and not event.echo and not ship.docked and not ship.dead:
+		if event.physical_keycode == KEY_M or event.physical_keycode == KEY_TAB:
+			hud.toggle_map()
+			get_viewport().set_input_as_handled()
+			return
+	if GameState.key_hit(event, "dock"):
+		if ship.docked:
+			launch()
+		elif not ship.dead and ship.position.distance_to(mothership.position) < mothership.DOCK_RADIUS:
+			if training_ctl != null and not training_ctl.can_dock():
+				hud.message("HANGAR ZABLOKOWANY — nie ma odwrotu!", Color(1.0, 0.3, 0.3))
+			elif mothership.wrecked:
+				hud.message("STATEK MATKA W GRUZACH — odbudowa za %ds" % int(ceil(mothership.wreck_t)), Color(1.0, 0.3, 0.3))
+			elif enemies.any_within(ship.position, HANGAR_LOCK_RADIUS):
+				hud.message("HANGAR ZAMKNIĘTY — zgub lub zestrzel myśliwce!", Color(1.0, 0.3, 0.3))
 			else:
-				hud.message("Promień porywania wymaga Laboratorium (drzewko ulepszeń).", Color(0.7, 0.7, 0.75))
-		elif GameState.key_hit(event, "tool3"):
-			if GameState.stat("rebuild") > 0.0:
-				ship.tool = 3
-				hud.message(GameState.keys_text("[{tool3}] Odbudowa: celuj w zniszczone miasta"), Color(1.0, 0.78, 0.3))
-			else:
-				hud.message("Odbudowa wymaga ulepszenia w drzewku (gałąź od Kieszeni).", Color(0.7, 0.7, 0.75))
-		elif GameState.key_hit(event, "wing") and not ship.docked and not ship.dead:
+				dock("Powrót z wyprawy zakończony sukcesem.", false, true)
+		elif not ship.dead and world.boss_portal_at(ship.position) >= 0:
+			# wejście do walki tylko na życzenie gracza
+			start_boss(world.boss_portal_at(ship.position))
+	elif GameState.key_hit(event, "tool1"):
+		ship.tool = 1
+		hud.message(GameState.keys_text("[{tool1}] Laser górniczy"), Color(1.0, 0.5, 0.85))
+	elif GameState.key_hit(event, "tool2"):
+		if GameState.stat("lab") > 0.0:
+			ship.tool = 2
+			hud.message(GameState.keys_text("[{tool2}] Promień porywania: miasta = ludzie, pola = krowy, lasy = jelenie"), Color(0.5, 1.0, 0.6))
+		else:
+			hud.message("Promień porywania wymaga Laboratorium (drzewko ulepszeń).", Color(0.7, 0.7, 0.75))
+	elif GameState.key_hit(event, "tool3"):
+		if GameState.stat("rebuild") > 0.0:
+			ship.tool = 3
+			hud.message(GameState.keys_text("[{tool3}] Odbudowa: celuj w zniszczone miasta"), Color(1.0, 0.78, 0.3))
+		else:
+			hud.message("Odbudowa wymaga ulepszenia w drzewku (gałąź od Kieszeni).", Color(0.7, 0.7, 0.75))
+	elif GameState.key_hit(event, "wing") and not ship.docked and not ship.dead:
+		if Input.is_key_pressed(KEY_SHIFT) and miners.count() > 0:
+			var rec: bool = miners.toggle_recall()
+			hud.message("Statki wydobywcze wracają do Statku Matki." if rec else "Statki wydobywcze wznowiły pracę.", Color(1.0, 0.8, 0.35))
+			Audio.play("click", 0.0)
+		else:
 			var msg: String = wingmen.toggle()
 			if msg == "":
 				hud.message("Myśliwce Imperium kupisz w zakładce Imperium na Statku Matce.", Color(0.7, 0.7, 0.75))
 			else:
 				hud.message(msg, Color(1.0, 0.8, 0.35))
 				Audio.play("launch", 0.05, -6.0)
-		elif GameState.key_hit(event, "rocket") and not ship.docked and not ship.dead:
-			var rmsg: String = weapons.fire_rocket()
-			if rmsg != "":
-				hud.message(rmsg, Color(1.0, 0.6, 0.3))
-		elif GameState.key_hit(event, "pause"):
+	elif GameState.key_hit(event, "rocket") and not ship.docked and not ship.dead:
+		var rmsg: String = weapons.fire_rocket()
+		if rmsg != "":
+			hud.message(rmsg, Color(1.0, 0.6, 0.3))
+	elif GameState.key_hit(event, "pause"):
+		if hud.map_open:
+			hud.map_open = false
+			hud.slow.queue_redraw()
+		else:
 			pause_menu.open(not ship.docked and not ship.dead)
-			get_viewport().set_input_as_handled()
-	elif event is InputEventMouseButton and event.pressed and not ship.docked:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			zoom_target = clampf(zoom_target * 1.12, 0.35, 2.2)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			zoom_target = clampf(zoom_target / 1.12, 0.35, 2.2)
+		get_viewport().set_input_as_handled()
 
 
 ## Kamera wyprzedza lot i zerka w stronę kursora, a przy dużej prędkości lekko się oddala.
@@ -602,29 +619,38 @@ func _update_siege(delta: float) -> void:
 	if not GameState.metros_done.has(str(Sectors.START)):
 		return
 	siege_timer -= delta
+	if siege_timer <= 10.0 and not siege_warned:
+		siege_warned = true
+		hud.message("WYKRYTO MOBILIZACJĘ ZIEMIAN — kontratak na Statek Matkę za 10 s!", Color(1.0, 0.55, 0.25))
+		Audio.play("warning", 0.0)
 	if siege_timer <= 0.0:
 		siege_timer = randf_range(SIEGE_MIN, SIEGE_MAX)
+		siege_warned = false
 		start_siege()
 
 
-## Fala Ziemian leci prosto na Statek Matkę. Rośnie z liczbą zniszczonych miast.
+## Fala Ziemian leci prosto na Statek Matkę. Rośnie z liczbą zniszczonych miast i metropolii.
 func start_siege() -> void:
+	var m_done: int = GameState.metros_progress().x
 	var c: int = GameState.cities_destroyed
-	var n := mini(4 + c / 3000, 8)
-	var gunners := mini(1 + c / 6000, 3)
+	var n := mini(4 + c / 2500 + m_done, 12)
+	var gunners := mini(1 + c / 5000 + m_done / 2, 5)
 	var mp: Vector2 = mothership.global_position
 	var start: int = enemies.fighters.size()
 	enemies.spawn_near(mp, n)
 	enemies.spawn_near(mp, gunners, "gunner")
+	var hp_mult := 1.5 + 0.12 * float(m_done)
 	for k in range(start, enemies.fighters.size()):
 		var f: Dictionary = enemies.fighters[k]
 		f["siege"] = true
-		f["hp"] *= 1.6
+		f["hp"] *= hp_mult
 		f["max_hp"] = f["hp"]
 	mothership.siege = true
 	Audio.play("alarm", 0.0)
 	Audio.play("boss_enter", 0.0, -4.0)
 	hud.show_big("ZIEMIA KONTRATAKUJE!", "Statek Matka pod ostrzałem — leć jej bronić!")
+	if miners and miners.count() > 0:
+		hud.message("Statki wydobywcze wycofują się do Statku Matki na czas oblężenia.", Color(1.0, 0.8, 0.35))
 
 
 ## Statek Matka zniszczony: część zapasów z magazynu przepada, wrak czeka na odbudowę.
@@ -681,8 +707,10 @@ func _on_landmark_tile_destroyed(k: int) -> void:
 		Audio.play("explosion_big", 0.0, 3.0)
 		Audio.play("research_done", 0.0)
 		GameState.refresh_quests()
-	if frac >= BOSS_TRIGGER and String(lm.get("boss", "")) != "" and GameState.boss_states.get(id, "") == "":
+	if frac >= BOSS_TRIGGER and String(lm.get("boss", "")) != "" and GameState.boss_state(100 + k) == "":
 		GameState.boss_states[id] = "pending"
+		if not ship.docked and not ship.dead:
+			start_boss.call_deferred(100 + k)
 
 
 ## Minigra działa na wierzchu, a cały świat stoi w pauzie.
@@ -710,18 +738,19 @@ func _on_boss_finished(won: bool) -> void:
 	get_tree().paused = false
 	Audio.play_game_music()
 	if won:
+		var bname := Sectors.boss_name(boss_sector)
 		# nagroda tylko za pierwsze zwycięstwo, kolejne walki są dla przyjemności
 		if GameState.boss_state(boss_sector) != "beaten":
-			GameState.boss_states[str(boss_sector)] = "beaten"
+			GameState.boss_states[GameState.boss_key(boss_sector)] = "beaten"
 			GameState.add_glory(1)
-			hud.message("Strażniczka pokonana! +1 Punkt Chwały Imperium", Color(1.0, 0.45, 0.9))
+			hud.message("%s — cel zniszczony! +1 Punkt Chwały Imperium" % bname, Color(1.0, 0.45, 0.9))
 		else:
-			hud.message("Strażniczka znów pokonana!", Color(1.0, 0.45, 0.9))
+			hud.message("%s — cel ponownie zniszczony!" % bname, Color(1.0, 0.45, 0.9))
 		GameState.save_game(world.export_save())
 	else:
 		# jak przy zwykłym zniszczeniu: wrak wraca do Matki, ładunek przepada
 		GameState.lose_cargo()
-		dock("Statek zniszczony w walce o %s. Wróć przez różowy punkt w mieście." % GameState.city_name(boss_sector))
+		dock("Statek zniszczony w walce o %s. Wróć przez różowy punkt w mieście." % GameState.target_name(boss_sector))
 
 
 func _on_missile_launched() -> void:

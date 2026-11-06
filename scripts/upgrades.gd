@@ -148,7 +148,7 @@ const LIST := [
 		"desc": "Wszystkie systemy spalają mniej paliwa.",
 		"effects": {"fuel_efficiency": 0.05}, "cost": {"metal": 8, "copper": 5}},
 	{"id": "fuel_siphon", "label": "Syfon", "name": "Syfon energetyczny", "cat": "engine", "pos": Vector2i(2, 3), "max": 3,
-		"desc": "Każdy zniszczony kafelek uzupełnia odrobinę paliwa (najwyżej 1 jednostkę paliwa na sekundę).",
+		"desc": "Każdy zniszczony kafelek oraz trafienie wroga laserem uzupełnia odrobinę paliwa (najwyżej 1 jedn./s).",
 		"effects": {"fuel_siphon": 0.1}, "cost": {"water": 20, "scrap": 15}},
 
 	# --- WYDOBYCIE (prawo): pojemność w rzędzie rdzenia, wydajność i złoża wyżej ---
@@ -258,7 +258,7 @@ const LIST := [
 		"desc": "Ostatni stopień ogniskowania: ogromny przyrost mocy lasera.",
 		"effects": {"laser_dps": 30.0}, "cost": {"uranium": 2, "neonite": 1, "electronics": 5}},
 	{"id": "hull_siphon", "label": "Rekonstrukcja", "name": "Rekonstrukcja z materii", "cat": "defense", "pos": Vector2i(-2, 2), "max": 4,
-		"desc": "Każdy rozbity kafelek łata kadłub (najwyżej 10 punktów kadłuba na sekundę).",
+		"desc": "Każdy rozbity kafelek oraz trafienie wroga laserem łata kadłub (najwyżej 10 pkt kadłuba/s).",
 		"effects": {"hull_siphon": 1.0}, "cost": {"biomass": 15, "scrap": 8}},
 	{"id": "armor2", "label": "Pancerz reakt.", "name": "Pancerz reaktywny", "cat": "defense", "pos": Vector2i(-3, 2), "max": 3,
 		"desc": "Druga warstwa pancerza - jeszcze mniej obrażeń kadłuba.",

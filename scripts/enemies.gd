@@ -733,12 +733,13 @@ func _draw() -> void:
 			pts.append(tr[1])
 			cols.append(Color(0.55, 0.5, 0.7, 0.22 * clampf(tr[2] / TREAD_LIFE, 0.0, 1.0)))
 		draw_multiline_colors(pts, cols, 3.0)
+	var view: Rect2 = world._cam_rect(560.0) if world else Rect2(-1e7, -1e7, 2e7, 2e7)
 	_draw_shell_marks()
 	for f in fighters:
-		if f["kind"] == "tank":
+		if f["kind"] == "tank" and view.has_point(f["pos"]):
 			_draw_tank(f)
 	for f in fighters:
-		if f["kind"] == "tank" or f.get("ext", false):
+		if f["kind"] == "tank" or f.get("ext", false) or not view.has_point(f["pos"]):
 			continue
 		var p: Vector2 = f["pos"]
 		var r: float = f["rot"]

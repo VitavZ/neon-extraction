@@ -209,10 +209,11 @@ func _draw_tooltip(cv: CanvasItem, u: Dictionary) -> void:
 	for k in eff:
 		rows.append([GameState.format_stat(k, float(eff[k]), true) + " " + String(GameState.STAT_NAMES[k]).to_upper(), C_LINE_ON, 12])
 	if eff.size() > 0 and lv < mx:
-		var k0: String = eff.keys()[0]
-		var cur := GameState.stat(k0)
 		rows.append("-")
-		rows.append([GameState.format_stat(k0, cur) + "  ->  " + GameState.format_stat(k0, cur + GameState.gain(u, k0)), Style.GOLD, 13])
+		for k0 in eff:
+			var cur := GameState.stat(k0)
+			var prefix := (String(GameState.STAT_NAMES[k0]).to_upper() + ": ") if eff.size() > 1 else ""
+			rows.append([prefix + GameState.format_stat(k0, cur) + "  ->  " + GameState.format_stat(k0, cur + GameState.gain(u, k0)), Style.GOLD, 13 if eff.size() == 1 else 12])
 		if GameState.has_mastery(u) and lv == mx - 1:
 			rows.append(["OSTATNI POZIOM: PREMIA MISTRZOSTWA (OK. +25%)", Style.GOLD, 12])
 	elif GameState.has_mastery(u) and lv >= mx:
