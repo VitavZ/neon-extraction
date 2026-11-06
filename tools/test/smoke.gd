@@ -33,6 +33,10 @@ func _run() -> void:
 	await _wait(1.5)
 	await _shot("01_menu")
 	var menu = current_scene
+	if menu == null:
+		_log("BŁĄD: menu się nie załadowało")
+		quit(1)
+		return
 	menu._go("options", 0)
 	await _wait(0.6)
 	await _shot("02_menu_options")
@@ -41,6 +45,10 @@ func _run() -> void:
 	change_scene_to_file("res://main.tscn")
 	await _wait(2.5)
 	var main = current_scene
+	if main == null or main.get("upgrade_screen") == null:
+		_log("BŁĄD: scena gry się nie załadowała")
+		quit(1)
+		return
 	await _shot("03_dock_grid")
 	var us = main.upgrade_screen
 	for t in us._tabs():

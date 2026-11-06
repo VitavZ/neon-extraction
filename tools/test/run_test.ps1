@@ -68,7 +68,7 @@ foreach ($k in $before.Keys) {
 Write-Output ("Sloty 1-3: " + $(if ($ok) { "bez zmian" } else { "ZMIENIONE" }))
 Write-Output "Kod wyjscia Godota: $exit"
 $all = @(Get-Content $log -Encoding UTF8 -ErrorAction SilentlyContinue) + @(Get-Content "$log.err" -Encoding UTF8 -ErrorAction SilentlyContinue)
-$errs = $all | Where-Object { $_ -match 'SCRIPT ERROR|^ERROR|Parse Error|Invalid call|Invalid access|Nonexistent function|WARNING' }
+$errs = $all | Where-Object { $_ -match 'SCRIPT ERROR|^ERROR|Parse Error|Invalid call|Invalid access|Nonexistent function|WARNING' -and $_ -notmatch '2D MSAA is enabled while there is no 2D content' }
 if ($errs) { Write-Output "--- BLEDY / OSTRZEZENIA ---"; $errs | Select-Object -First 40 }
 $all | Where-Object { $_ -match '^\[TEST\]' }
 Write-Output "Zrzuty: $Out"
