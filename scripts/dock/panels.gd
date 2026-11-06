@@ -134,7 +134,7 @@ func _draw_top_bar(vs: Vector2) -> void:
 	var title := "STATEK MATKA"
 	draw_string(pf, Vector2(103 + glitch, 41), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color(0.2, 0.9, 1.0, 0.55))
 	draw_string(pf, Vector2(100 - glitch, 39), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Style.PINK)
-	var sector_name: String = Sectors.LIST[GameState.mother_sector]["name"]
+	var sector_name: String = "ROSWELL (SZKOLENIE)" if GameState.training else String(Sectors.LIST[GameState.mother_sector]["name"])
 	_text(Vector2(101, 62), "WYPRAWA NR %d  //  SEKTOR: %s" % [GameState.sorties + 1, sector_name], 12, Style.CYAN)
 	_draw_top_button(_stats_rect(), "PARAMETRY", Style.CYAN, overlay == "stats")
 	_draw_top_button(_brief_rect(), "ROZKAZY", Style.PINK, overlay == "brief")

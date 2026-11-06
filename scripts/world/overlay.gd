@@ -69,8 +69,10 @@ func _draw_overlay() -> void:
 	var vsz := get_viewport_rect().size
 	var tl: Vector2 = inv * Vector2.ZERO
 	var cam_rect := Rect2(tl, (inv * vsz) - tl).grow(40)
-	_draw_sector_borders(cam_rect)
-	_draw_metro_last(cam_rect)
+	# szkolenie to jeden obszar: bez granic sektorów USA i podpisów metropolii (Roswell rysuje training.gd)
+	if not GameState.training:
+		_draw_sector_borders(cam_rect)
+		_draw_metro_last(cam_rect)
 	# szerszy obszar: okrąg zasięgu wieżyczki spoza ekranu też musi być widoczny
 	_ring_view = cam_rect
 	_ring_q.clear()
@@ -342,6 +344,8 @@ func _draw_boss_portal(p: Vector2) -> void:
 
 ## Podpisy metropolii na mapie.
 func _draw_city_labels(view: Rect2) -> void:
+	if GameState.training:
+		return
 	var font := Style.font_pixel()
 	var fsize := 72
 	for s in Sectors.LIST.size():

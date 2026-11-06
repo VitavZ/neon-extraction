@@ -14,7 +14,7 @@ const SECTOR := 4                                   # Wielkie Równiny (tu jest 
 const ROSWELL_LONLAT := Vector2(-104.52, 33.39)
 const TOWN_R := 4.5                                 # promień miasta w kafelkach
 const TOWN_TURRETS := 7
-const AREA := Rect2i(120, 236, 100, 96)             # obszar szkolenia w kafelkach (sektor ma 160x160)
+const AREA := Rect2i(120, 234, 100, 100)            # obszar szkolenia w kafelkach (sektor ma 160x160); kwadrat = minimapa bez zniekształceń
 const LASER_GATE := 80.0                            # moc lasera, która przebija tarczę Roswell
 const REBUILD_GOAL := 0.8
 
@@ -109,6 +109,8 @@ func setup() -> void:
 	ship = main.ship
 	z_index = 4
 	var c := Sectors.cell_of(ROSWELL_LONLAT)
+	# jeden obszar, jedno miasto: inne miasteczka z prawdziwej mapy znikają
+	world.clear_towns(AREA)
 	town = world.stamp_town(c, TOWN_R, TOWN_TURRETS, GameState.world_seed)
 	town_center = Vector2(c.x * world.T + world.T * 0.5, c.y * world.T + world.T * 0.5)
 	for i in town:
@@ -130,6 +132,9 @@ func setup() -> void:
 	ui.draw.connect(_draw_ui)
 	# ekrany końcowe działają w pauzie, a scenariusz stoi, gdy pauzują go okienka lub menu pauzy
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# HUD: jeden obszar zamiast sektorów USA, na minimapie tylko Roswell
+	main.hud.custom_view = {"rect": AREA, "title": "OBSZAR SZKOLENIA", "city": "ROSWELL", "city_pos": town_center,
+		"destroyed": destroyed_frac, "rebuilt": rebuilt_frac}
 	tutorial = main.tutorial
 	tutorial.custom = true
 	tutorial.steps = STEPS

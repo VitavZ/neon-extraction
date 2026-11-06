@@ -20,6 +20,8 @@ var time := 0.0
 var last_counts: Dictionary = {}
 var pops: Dictionary = {}   # zasób -> czas "pyknięcia" licznika
 var show_fps := false
+## Szkolenie (training.gd): jeden obszar zamiast sektorów USA - {rect: Rect2i w kafelkach, title, city, city_pos, destroyed: Callable, rebuilt: Callable}
+var custom_view: Dictionary = {}
 var view_sector := -1            # sektor na minimapie (zmienia się dopiero kawałek za granicą)
 var view_origin := Vector2.ZERO  # lewy górny róg minimapy w kafelkach, płynnie dąży do sektora
 var banner_t := -1.0             # czas od wejścia do sektora (< 0 = brak baneru)
@@ -221,6 +223,11 @@ func _update_sector_view(delta: float) -> void:
 		banner_t += delta
 		if banner_t > BANNER_TIME:
 			banner_t = -1.0
+	if not custom_view.is_empty():
+		view_sector = world.sector_at_pos(ship.global_position)
+		view_origin = Vector2(custom_view["rect"].position)
+		banner_t = -1.0
+		return
 	var cur: int = world.sector_at_pos(ship.global_position)
 	if ship.docked or view_sector < 0:
 		view_sector = cur
@@ -580,8 +587,9 @@ func _draw() -> void:
 		Style.chamfer_panel(self, mframe, Style.PINK, Color(0.01, 0.0, 0.04, 0.95), 12.0)
 		# minimapa pokazuje tylko sektor, w którym jest statek
 		var sector := view_sector
-		draw_texture_rect_region(world.minimap_tex, Rect2(mp, Vector2(ms, ms)), Rect2(view_origin, Vector2(Sectors.SIZE, Sectors.SIZE)))
-		var sector_px := float(Sectors.SIZE * world.T)
+		var view_size := float(Sectors.SIZE) if custom_view.is_empty() else float(custom_view["rect"].size.x)
+		draw_texture_rect_region(world.minimap_tex, Rect2(mp, Vector2(ms, ms)), Rect2(view_origin, Vector2(view_size, view_size)))
+		var sector_px: float = view_size * world.T
 		var k := ms / sector_px
 		var origin := view_origin * float(world.T)
 		var map_rect := Rect2(mp, Vector2(ms, ms))
@@ -595,8 +603,16 @@ func _draw() -> void:
 			var sy: float = mp.y + scan - j * 3.0
 			if sy > mp.y:
 				draw_rect(Rect2(mp.x, sy, ms, 3.0), Color(0.45, 0.95, 1.0, 0.07 * (1.0 - j / 5.0)))
+		# szkolenie: na minimapie tylko Roswell
+		if not custom_view.is_empty():
+			var rp: Vector2 = mp + (custom_view["city_pos"] - origin) * k
+			var rn: String = custom_view["city"]
+			var rw := _tw(rn, 11, true)
+			var rl := Vector2(clampf(rp.x - rw * 0.5, mp.x + 2, mp.x + ms - rw - 2), rp.y + 17)
+			draw_string_outline(font_b, rl, rn, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 4, Color(0, 0, 0, 0.95))
+			_t(rl, rn, 11, Color(1.0, 0.8, 0.98), true)
 		# przy przesuwaniu widać też miasto sąsiedniego sektora
-		for s in Sectors.LIST.size():
+		for s in (Sectors.LIST.size() if custom_view.is_empty() else 0):
 			var cpos: Vector2 = mp + (world.city_pos(s) - origin) * k
 			if not map_rect.has_point(cpos) or not Sectors.has_city(s):
 				continue
@@ -605,7 +621,7 @@ func _draw() -> void:
 			var cl := Vector2(clampf(cpos.x - cw * 0.5, mp.x + 2, mp.x + ms - cw - 2), cpos.y + 17 if cpos.y < mp.y + ms - 24 else cpos.y - 9)
 			draw_string_outline(font_b, cl, cname, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 4, Color(0, 0, 0, 0.95))
 			_t(cl, cname, 11, Color(1.0, 0.8, 0.98), true)
-		for lk in world.landmark_cells.size():
+		for lk in (world.landmark_cells.size() if custom_view.is_empty() else 0):
 			var lmp: Vector2 = mp + (world.landmark_pos(lk) - origin) * k
 			if not map_rect.has_point(lmp):
 				continue
@@ -627,11 +643,11 @@ func _draw() -> void:
 				if map_rect.has_point(bp):
 					draw_arc(bp, 7.0 + dot_a * 2.0, 0.0, TAU, 16, Style.PINK, 2.0, true)
 		# granice sektorów na minimapie w czasie przesuwania
-		for bx in range(1, Sectors.COLS):
+		for bx in range(1, Sectors.COLS if custom_view.is_empty() else 1):
 			var gx: float = mp.x + (bx * Sectors.SIZE - view_origin.x) * ms / Sectors.SIZE
 			if gx > mp.x and gx < mp.x + ms:
 				draw_line(Vector2(gx, mp.y), Vector2(gx, mp.y + ms), Color(0.4, 0.9, 1.0, 0.8), 1.0)
-		for by in range(1, Sectors.ROWS):
+		for by in range(1, Sectors.ROWS if custom_view.is_empty() else 1):
 			var gy: float = mp.y + (by * Sectors.SIZE - view_origin.y) * ms / Sectors.SIZE
 			if gy > mp.y and gy < mp.y + ms:
 				draw_line(Vector2(mp.x, gy), Vector2(mp.x + ms, gy), Color(0.4, 0.9, 1.0, 0.8), 1.0)
@@ -676,19 +692,28 @@ func _draw() -> void:
 			extra_rows += 1
 		if mothership and (mothership.siege or mothership.wrecked or mothership.hp < mothership.max_hp() - 0.5):
 			extra_rows += 1
-		var lms: Array = world.landmarks_in_sector(sector)
+		var lms: Array = world.landmarks_in_sector(sector) if custom_view.is_empty() else []
 		var info := Rect2(mp.x - 6, mframe.end.y + 8, ms + 12, 34.0 + (3.0 + lms.size()) * 25.0 + extra_rows * 16.0 + 14.0)
 		Style.chamfer_panel(self, info, Color(0.55, 0.4, 0.85), Color(0.02, 0.0, 0.05, 0.86), 10.0)
 		right_bottom = info.end.y
 		var ly := info.position.y + 20.0
-		_t(Vector2(mp.x, ly), String(Sectors.LIST[sector]["name"]), 12, Style.CYAN, true)
+		_t(Vector2(mp.x, ly), String(Sectors.LIST[sector]["name"]) if custom_view.is_empty() else String(custom_view["title"]), 12, Style.CYAN, true)
 		draw_line(Vector2(mp.x, ly + 7.0), Vector2(mp.x + ms, ly + 7.0), Color(0.3, 0.95, 1.0, 0.3), 1.0)
 		ly += 26.0
-		_stat_bar(mp.x, ly, ms, "ZNISZCZENIE ZIEMI", "%.2f%%" % world.devastated_percent(), world.devastated_percent() / 100.0, Style.PINK)
-		ly += 25.0
-		_stat_bar(mp.x, ly, ms, "ODBUDOWA ZIEMI", "%.2f%%" % world.imperial_percent(), world.imperial_percent() / 100.0, Style.GOLD)
-		ly += 25.0
-		if Sectors.has_city(sector):
+		if not custom_view.is_empty():
+			var df: float = custom_view["destroyed"].call()
+			var rf2: float = custom_view["rebuilt"].call()
+			_stat_bar(mp.x, ly, ms, "ZNISZCZENIE " + String(custom_view["city"]), "%d%%" % int(df * 100.0), df, Style.PINK)
+			ly += 25.0
+			_stat_bar(mp.x, ly, ms, "ODBUDOWA " + String(custom_view["city"]), "%d%%" % int(rf2 * 100.0), rf2, Style.GOLD)
+			ly += 25.0
+			sector = -1
+		if sector >= 0:
+			_stat_bar(mp.x, ly, ms, "ZNISZCZENIE ZIEMI", "%.2f%%" % world.devastated_percent(), world.devastated_percent() / 100.0, Style.PINK)
+			ly += 25.0
+			_stat_bar(mp.x, ly, ms, "ODBUDOWA ZIEMI", "%.2f%%" % world.imperial_percent(), world.imperial_percent() / 100.0, Style.GOLD)
+			ly += 25.0
+		if sector >= 0 and Sectors.has_city(sector):
 			_stat_bar(mp.x, ly, ms, GameState.city_name(sector), "%d%%" % int(world.metro_destroyed_fraction(sector) * 100.0), world.metro_destroyed_fraction(sector), Color(1.0, 0.55, 0.9))
 			ly += 25.0
 		for lk in lms:

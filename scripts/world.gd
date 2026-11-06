@@ -287,6 +287,22 @@ func _process(delta: float) -> void:
 # SZKOLENIE (scripts/training.gd)
 # =====================================================================
 
+## Szkolenie: w prostokącie (kafelki) miasta zamieniają się w równiny i znikają wieżyczki - zostaje tylko Roswell.
+func clear_towns(r: Rect2i) -> void:
+	for y in range(maxi(r.position.y, 0), mini(r.end.y, H)):
+		for x in range(maxi(r.position.x, 0), mini(r.end.x, N)):
+			var i := y * N + x
+			if surface[i] >= CITY:
+				surface[i] = PLAINS
+				max_hp[i] = TILE_DEFS[PLAINS]["hp"] * (1.0 + danger(x, y) / 90.0)
+				hp[i] = max_hp[i]
+			if turrets.has(i):
+				turrets.erase(i)
+				var key := _bucket_key(x, y)
+				if turret_buckets.has(key):
+					turret_buckets[key].erase(i)
+
+
 ## Małe miasto wokół komórki c (promień r w kafelkach) z kilkoma wieżyczkami. Zwraca indeksy jego kafelków.
 func stamp_town(c: Vector2i, r: float, turret_count: int, seed_value: int) -> Array:
 	var out: Array = []
