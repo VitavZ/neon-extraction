@@ -466,9 +466,7 @@ func _on_tile_destroyed(_idx: int, pos: Vector2, drops: Dictionary, info: String
 		var roll := randf()
 		var bonus := "copper" if roll < 0.45 else ("iron" if roll < 0.8 else ("electronics" if roll < 0.95 else "gold"))
 		drops[bonus] = int(drops.get(bonus, 0)) + 1
-	var heal := GameState.stat("hull_siphon")
-	if heal > 0.0 and not ship.dead:
-		ship.hull = minf(GameState.stat("max_hull"), ship.hull + heal)
+	ship.siphon(GameState.stat("fuel_siphon"), GameState.stat("hull_siphon"))
 	for res in drops:
 		var got := GameState.add_cargo(res, int(drops[res]))
 		var c: Color = GameState.RES_COLORS[res]
@@ -480,9 +478,6 @@ func _on_tile_destroyed(_idx: int, pos: Vector2, drops: Dictionary, info: String
 			hud.message("ŁADOWNIA PEŁNA — wracaj do statku matki!", Color(1.00, 0.17, 0.13))
 	if info != "":
 		hud.message(info, Color(1.00, 0.80, 0.30))
-	var siphon := GameState.stat("fuel_siphon")
-	if siphon > 0.0:
-		ship.add_fuel(siphon)
 
 
 func _on_city_destroyed(_pos: Vector2) -> void:

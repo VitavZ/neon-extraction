@@ -23,8 +23,10 @@ Aktualna wersja: **v0.3.0**.
 17. **11 nowych ulepszeń**: laser_combat (`fighter_damage`), drill2, laser_focus, hull_siphon (leczenie za kafelek), armor2, shield_cap, fuel_cell, strafe2, salvage (szansa na rzadki surowiec), yield2, power_mult2. Skaner przeniesiony przed Wymiarową ładownię.
 18. **Czołgi** (`kind: "tank"` w `enemies.fighters`): jeżdżą po lądzie (`world.ground_at`, `world.tank_point`), wieża za graczem, pociski artyleryjskie po łuku z celownikiem na ziemi (`enemies.shells`), ślady gąsienic, łup, osobny licznik w HUD. Spawn w `main._update_patrols` od 3. wyprawy.
 19. **Porządki w kodzie (2026-11-06)**: `upgrade_screen.gd` podzielony na `scripts/dock/` (łańcuch extends), `world.gd` na `scripts/world/`; wspólne opcje w `options.gd`; pomocniki `ease_out`/`chamfer_pts`/`closed` w `Style`; usunięty martwy kod; zestaw testowy `tools/test/` (bezpieczne uruchamianie, test dymny, porównanie zrzutów); `CLAUDE.md` z mapą kodu. Wygląd i działanie bez zmian (zrzuty doku identyczne co do piksela).
+20. **Balans (2026-11-06, łagodnie)**: wszystkie statystyki okrągłe po każdym zakupie (krok na statystykę + zaokrąglana premia Mistrzostwa, kontrola `tools/test/balance.gd`); wrogowie dostają do x1,8 kadłuba i x1,5 obrażeń zależnie od mocy lasera i wytrzymałości gracza (`enemies.power_scale`); paliwo ma znaczenie: oszczędność maks. 40% (było 75%), syfon paliwa maks. 1/s, kadłub z kafelków maks. 10/s, bez paliwa nie działa naprawa, a ubytek kadłuba to 1%/s; rakiety: przeładowanie min. 4 s (było 1,25 s), drony 0,3 s; laser maks. 300 (było 325), baza 20. Rozprysk lasera działa też przy celowaniu w zniszczony kafelek.
 
 ## Otwarte / do obserwacji
+- Balans z punktu 20 nie był jeszcze sprawdzony w normalnej grze – do dostrojenia stałe `SCALE_*` w enemies.gd i limity syfonów w ship.gd.
 - Nic nie testowane na Macu.
 - Namiernik bojowy na maksimum daje +100% obrażeń vs myśliwce – może być za mocny.
 - Czołgi i nowe ulepszenia (Szperacz, Rekonstrukcja) nie były jeszcze sprawdzone w normalnej grze przez gracza.

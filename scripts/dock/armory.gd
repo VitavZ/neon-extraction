@@ -154,7 +154,7 @@ func _draw_armory() -> void:
 				es += GameState.format_stat(ek, float(eff[ek]), true) + " " + String(GameState.STAT_NAMES[ek]) + "  "
 			_text(Vector2(lx, rr.position.y + 40), es, 11, Color(0.5, 1.0, 0.6))
 			if st == "max":
-				_text(Vector2(lx, rr.position.y + 59), "MISTRZOSTWO: EFEKT +25%" if mx > 1 else "MAKSYMALNY POZIOM", 11, Style.GOLD)
+				_text(Vector2(lx, rr.position.y + 59), "MISTRZOSTWO: EFEKT OK. +25%" if GameState.has_mastery(u) else "MAKSYMALNY POZIOM", 11, Style.GOLD)
 			else:
 				_cost_inline(Vector2(lx, rr.position.y + 59), GameState.cost_of(u), 11, rr.end.x - 8 - lx)
 			# poziom: kreski w prawym górnym rogu

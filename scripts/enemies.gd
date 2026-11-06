@@ -58,17 +58,33 @@ func _ready() -> void:
 	z_index = 6
 
 
+## Ziemianie dostosowują się do siły statku gracza: gdy moc lasera i wytrzymałość przekroczą poziom
+## ze środka gry, myśliwce i czołgi mają grubszy kadłub (x) i mocniej strzelają (y). Łagodnie (pierwiastek) i z limitem;
+## na początku gry mnożniki wynoszą 1.
+const SCALE_DPS_REF := 80.0     # moc lasera, od której wrogowie zaczynają mieć więcej kadłuba
+const SCALE_EHP_REF := 500.0    # wytrzymałość gracza (kadłub + tarcza, z pancerzem), od której mocniej biją
+const SCALE_HP_MAX := 1.8
+const SCALE_DMG_MAX := 1.5
+
+
+func power_scale() -> Vector2:
+	var dps := GameState.stat("laser_dps")
+	var ehp := (GameState.stat("max_hull") + GameState.stat("max_shield")) / maxf(0.3, 1.0 - GameState.stat("armor"))
+	return Vector2(clampf(sqrt(dps / SCALE_DPS_REF), 1.0, SCALE_HP_MAX), clampf(sqrt(ehp / SCALE_EHP_REF), 1.0, SCALE_DMG_MAX))
+
+
 func spawn_near(target: Vector2, count: int, kind := "fighter") -> void:
 	var d: float = world.danger_at(target)
+	var ps := power_scale()
 	var laser := kind == "laser"
 	var far := offscreen_dist()
 	for k in count:
 		var ang := randf() * TAU
 		var p := target + Vector2.from_angle(ang) * randf_range(far, far + 200.0)
 		var gunner := kind == "gunner"
-		var hp := (28.0 if laser else (38.0 if gunner else 45.0)) * (1.0 + d / 60.0)
+		var hp := (28.0 if laser else (38.0 if gunner else 45.0)) * (1.0 + d / 60.0) * ps.x
 		# dla lasera: obrażenia na sekundę wiązki (działa ok. 25% czasu), dla pozostałych: za pocisk
-		var dmg := (13.0 if laser else (4.5 if gunner else 7.0)) * (1.0 + d / 70.0)
+		var dmg := (13.0 if laser else (4.5 if gunner else 7.0)) * (1.0 + d / 70.0) * ps.y
 		fighters.append({"kind": kind, "pos": p, "vel": Vector2.from_angle(ang + PI) * 200.0, "rot": ang + PI,
 			"hp": hp, "max_hp": hp, "cd": randf_range(1.0, 2.0), "orbit": (1.0 if randf() < 0.5 else -1.0),
 			"flash": 0.0, "dmg": dmg, "state": "idle", "state_t": 0.0, "burst_left": 0, "burst_t": 0.0})
@@ -115,6 +131,7 @@ func spawn_patrol(at: Vector2, count: int, kind := "fighter") -> void:
 ## Czołgi: grupa rusza z okolicy miasta i jeździ od miasta do miasta, dopóki nie zobaczy gracza.
 func spawn_tanks(at: Vector2, count: int) -> void:
 	var d: float = world.danger_at(at)
+	var ps := power_scale()
 	for k in count:
 		var p := at
 		for attempt in 12:
@@ -122,11 +139,11 @@ func spawn_tanks(at: Vector2, count: int) -> void:
 			if world.ground_at(q):
 				p = q
 				break
-		var hp := 140.0 * (1.0 + d / 60.0)
+		var hp := 140.0 * (1.0 + d / 60.0) * ps.x
 		var rot := randf() * TAU
 		fighters.append({"kind": "tank", "pos": p, "vel": Vector2.ZERO, "rot": rot, "turret": rot, "hp": hp, "max_hp": hp,
 			"cd": randf_range(1.5, 3.0), "orbit": (1.0 if randf() < 0.5 else -1.0), "flash": 0.0,
-			"dmg": 14.0 * (1.0 + d / 70.0), "state": "idle", "state_t": 0.0, "burst_left": 0, "burst_t": 0.0,
+			"dmg": 14.0 * (1.0 + d / 70.0) * ps.y, "state": "idle", "state_t": 0.0, "burst_left": 0, "burst_t": 0.0,
 			"wp": world.tank_point(p), "tread": 0.0, "recoil": 0.0, "mark": p, "alert": false})
 
 

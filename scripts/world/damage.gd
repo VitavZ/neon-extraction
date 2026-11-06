@@ -81,16 +81,23 @@ func _imperial_spread_once() -> bool:
 
 
 ## Uderzenie wiązki w punkt. Zwraca indeks trafionego kafelka (lub -1).
+## Zwraca indeks trafionego kafelka albo -1, gdy wiązka nic nie raniła. Wiązka wycelowana w już zniszczony
+## kafelek nadal rani rozpryskiem kafelki wokół (nie trzeba przenosić celownika).
 func laser_hit(p: Vector2, amount: float, splash_out: Array = []) -> int:
 	var i := pos_to_idx(p)
-	if not is_minable(i):
+	if i < 0:
 		return -1
-	target_idx = i
-	target_timer = 0.15
-	hit_glow = 1.0
-	_damage(i, amount, "laser")
-	# rozprysk: okrąg wokół punktu trafienia (promień w kafelkach, liczony do środków kafelków)
+	var center_alive := is_minable(i)
 	var splash := GameState.stat("laser_splash")
+	if not center_alive and splash <= 0.0:
+		return -1
+	if center_alive:
+		target_idx = i
+		target_timer = 0.15
+		hit_glow = 1.0
+		_damage(i, amount, "laser")
+	# rozprysk: okrąg wokół punktu trafienia (promień w kafelkach, liczony do środków kafelków)
+	var hit_any := center_alive
 	if splash > 0.0:
 		var r_px: float = splash * T
 		var ri := int(ceil(splash))
@@ -108,7 +115,8 @@ func laser_hit(p: Vector2, amount: float, splash_out: Array = []) -> int:
 				if is_minable(j) and idx_center(j).distance_to(p) <= r_px:
 					splash_out.append(idx_center(j))
 					_damage(j, amount * 0.5, "splash")
-	return i
+					hit_any = true
+	return i if hit_any else -1
 
 
 ## Publiczne obrażenia kafelka (rakiety, drony, karabiny).

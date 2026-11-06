@@ -50,7 +50,11 @@ var fx: Node2D
 var trail: Line2D
 var time := 0.0
 
-const TURN_GAIN := 11.0       # im większe, tym ostrzej statek dochodzi do kąta kursora
+const SIPHON_FUEL_PER_S := 1.0   # najwięcej paliwa na sekundę z Syfonu energetycznego
+const SIPHON_HULL_PER_S := 10.0  # najwięcej kadłuba na sekundę z Rekonstrukcji z materii
+var siphon_fuel_left := SIPHON_FUEL_PER_S
+var siphon_hull_left := SIPHON_HULL_PER_S
+const TURN_GAIN := 11.0      # im większe, tym ostrzej statek dochodzi do kąta kursora
 const TURN_RESPONSE := 24.0   # jak szybko obrót nadąża za sterowaniem
 const AIM_DEADZONE := 26.0    # kursor na samym statku nie kręci nim w kółko
 const SPOOL_RATE := 14.0
@@ -196,7 +200,11 @@ func _process(delta: float) -> void:
 	since_hit += delta
 	if since_hit > 2.0:
 		shield = minf(shield + GameState.stat("shield_regen") * delta, GameState.stat("max_shield"))
-	hull = minf(hull + GameState.stat("hull_regen") * delta, GameState.stat("max_hull"))
+	# bez paliwa nanoboty stają - inaczej w późnej grze naprawa wyprzedzała ubytek i paliwo nie miało znaczenia
+	if not no_fuel:
+		hull = minf(hull + GameState.stat("hull_regen") * delta, GameState.stat("max_hull"))
+	siphon_fuel_left = minf(siphon_fuel_left + SIPHON_FUEL_PER_S * delta, SIPHON_FUEL_PER_S)
+	siphon_hull_left = minf(siphon_hull_left + SIPHON_HULL_PER_S * delta, SIPHON_HULL_PER_S)
 
 	# laser górniczy / promień porywania (bez paliwa nie działają)
 	var lmb := Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not no_fuel
@@ -244,8 +252,8 @@ func _process(delta: float) -> void:
 	burn *= maxf(0.2, 1.0 - GameState.stat("fuel_efficiency"))
 	fuel = maxf(0.0, fuel - burn * delta)
 	if no_fuel:
-		# systemy podtrzymania życia zżerają kadłub - trzeba wracać
-		hull -= 3.0 * delta
+		# systemy podtrzymania życia zżerają kadłub (1% na sekundę, co najmniej 3) - trzeba wracać
+		hull -= maxf(3.0, GameState.stat("max_hull") * 0.01) * delta
 		if hull <= 0.0:
 			take_damage(1.0)
 
@@ -509,6 +517,21 @@ func _rebuild_step(delta: float) -> void:
 
 func add_fuel(amount: float) -> void:
 	fuel = minf(fuel + amount, GameState.stat("max_fuel"))
+
+
+## Syfony z rozbitych kafelków (paliwo, kadłub) mają limit na sekundę: masowe niszczenie
+## rozpryskiem i detonacją nie może dawać nieskończonego paliwa ani nieśmiertelności.
+func siphon(fuel_amount: float, hull_amount: float) -> void:
+	if dead:
+		return
+	var f := minf(fuel_amount, siphon_fuel_left)
+	if f > 0.0:
+		siphon_fuel_left -= f
+		add_fuel(f)
+	var h := minf(hull_amount, siphon_hull_left)
+	if h > 0.0:
+		siphon_hull_left -= h
+		hull = minf(GameState.stat("max_hull"), hull + h)
 
 
 func take_damage(amount: float) -> void:

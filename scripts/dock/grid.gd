@@ -201,10 +201,10 @@ func _draw_tooltip(cv: CanvasItem, u: Dictionary) -> void:
 		var cur := GameState.stat(k0)
 		rows.append("-")
 		rows.append([GameState.format_stat(k0, cur) + "  ->  " + GameState.format_stat(k0, cur + GameState.gain(u, k0)), Style.GOLD, 13])
-		if mx > 1 and lv == mx - 1:
-			rows.append(["OSTATNI POZIOM: MISTRZOSTWO +25% EFEKTU", Style.GOLD, 12])
-	elif mx > 1 and lv >= mx:
-		rows.append(["MISTRZOSTWO: EFEKT +25%", Style.GOLD, 12])
+		if GameState.has_mastery(u) and lv == mx - 1:
+			rows.append(["OSTATNI POZIOM: PREMIA MISTRZOSTWA (OK. +25%)", Style.GOLD, 12])
+	elif GameState.has_mastery(u) and lv >= mx:
+		rows.append(["MISTRZOSTWO: EFEKT OK. +25%", Style.GOLD, 12])
 	rows.append("-")
 	rows.append(["KUPIONO: %d/%d" % [lv, mx], Style.TEXT, 12])
 	rows.append("-")

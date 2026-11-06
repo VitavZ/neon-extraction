@@ -60,8 +60,16 @@ ale nie może wołać funkcji z części późniejszych (Godot zgłosi „Functi
 | `sectors.gd` | 9 sektorów 3×3 po 160×160 kafelków, metropolie, Dystrykt Federalny. |
 | `style.gd`, `mesh_painter.gd`, `crt.gd`, `audio.gd`, `splash.gd` | Styl i pomocniki rysowania, wsadowe rysowanie kafelków do jednej siatki, filtr CRT/jaskrawość, dźwięk, ekran startowy. |
 
+## Balans: okrągłe statystyki (życzenie gracza)
+- Każda statystyka ma krok (`GameState.STAT_STEPS` / `stat_step`: 10 dla dużych, 5% dla procentów itp.). Bazy w `BASE_STATS`
+  i przyrosty `effects` w `upgrades.gd` muszą być jego wielokrotnościami. Mistrzostwo (`mastery_extra`) to ok. +25% efektu,
+  zaokrąglone do kroku; `"no_mastery": true` wyłącza je dla węzła. Koszty nie muszą być okrągłe.
+- Po każdej zmianie liczb: `run_test.ps1 -Script res://tools/test/balance.gd` → musi pokazać „niezaokrąglonych wartości: 0”;
+  wypisuje też tabelę baza → maksimum i statystyki slotu 1.
+- Wrogowie rosną z siłą gracza: `enemies.gd` `power_scale()` (stałe `SCALE_*`). Syfony paliwa/kadłuba mają limit na sekundę (`ship.gd` `SIPHON_*`).
+
 ## Gdzie co zmieniać (skróty)
-- Balans statku/ulepszeń: `upgrades.gd` (effects/cost), `game_state.gd` `BASE_STATS`.
+- Balans statku/ulepszeń: `upgrades.gd` (effects/cost), `game_state.gd` `BASE_STATS` + `STAT_STEPS`.
 - Wrogowie: stałe w `enemies.gd`, liczba i tempo spawnu w `main.gd` (`MAX_PATROLS`, `MAX_ENEMIES`, `_update_patrols`, `_spawn_wave`).
 - Wieżyczki miast/rakiety: stałe w `world/base.gd` (`TURRET_RANGE`, `MISSILE_*`), logika w `world.gd` `_process` i `world/defense.gd`.
 - Wydajność rysowania mapy: `world/art.gd` + `mesh_painter.gd`; okręgi zasięgu: `world/overlay.gd` (`RING_FULL_DETAIL`, `RING_MAX`).

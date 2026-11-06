@@ -293,7 +293,7 @@ func _stat_bounds(key: String) -> Array:
 	var best := base
 	for u in Upgrades.ARMORY:
 		if u["effects"].has(key):
-			best += float(u["effects"][key]) * int(u["max"]) * (1.0 + Upgrades.MASTERY_BONUS if int(u["max"]) > 1 else 1.0)
+			best += GameState.contribution(u, key, int(u["max"]))
 	return [base, best]
 
 

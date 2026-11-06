@@ -81,26 +81,39 @@ const RES_COLORS := {
 	"power": Color(1.0, 0.78, 0.3), "glory": Color(1.0, 0.4, 0.9), "loyalty": Color(0.45, 0.9, 1.0), "humans": Color(1.0, 0.8, 0.65), "cows": Color(0.95, 0.95, 0.85), "deer": Color(0.85, 0.6, 0.35),
 }
 
+## Krok "ładnych" wartości (zob. stat_step): bazy i przyrosty w upgrades.gd są jego wielokrotnościami.
+## Brak klucza = 5% dla statystyk procentowych, 1 dla pozostałych. Sprawdza to tools/test/balance.gd.
+const STAT_STEPS := {
+	"laser_dps": 10.0, "laser_range": 10.0, "deposit_damage_mult": 0.1, "chain_power": 0.1, "chain_interval": 0.1,
+	"chain_range": 10.0, "det_power": 0.1, "max_hull": 10.0, "max_shield": 10.0, "thrust": 10.0, "max_speed": 10.0,
+	"drift_boost": 10.0, "cargo": 10.0, "deposit_yield_mult": 0.1, "max_fuel": 10.0, "fuel_siphon": 0.1,
+	"rocket_damage": 10.0, "drone_damage": 5.0, "drone_interval": 0.1, "gun_damage": 5.0, "gun_interval": 0.1, "gun_range": 10.0,
+	"abduct_speed": 0.1, "abduct_range": 10.0, "abduct_area": 0.5, "rebuild_area": 0.5, "rebuild_speed": 0.5, "rebuild_range": 10.0,
+	"power_mult": 0.1, "research_speed": 0.1, "ally_damage": 10.0, "ally_range": 10.0, "miner_dps": 10.0, "miner_yield": 0.1,
+	"miner_speed": 10.0, "miner_hp": 10.0, "wing_damage": 5.0, "wing_interval": 0.1, "wing_speed": 10.0, "wing_hp": 10.0,
+	"transit_interval": 5.0, "transit_hp": 10.0,
+}
+
 const BASE_STATS := {
-	"laser_dps": 15.0, "laser_range": 260.0, "laser_splash": 0.0, "deposit_damage_mult": 1.0,
+	"laser_dps": 20.0, "laser_range": 260.0, "laser_splash": 0.0, "deposit_damage_mult": 1.0,
 	"max_hull": 100.0, "armor": 0.0, "max_shield": 0.0, "shield_regen": 0.0, "hull_regen": 0.0,
-	"thrust": 700.0, "max_speed": 430.0, "turn_rate": 6.0, "brake": 2.5, "strafe": 0.45,
+	"thrust": 700.0, "max_speed": 430.0, "turn_rate": 6.0, "brake": 3.0, "strafe": 0.45,
 	"chain_jumps": 0.0, "chain_power": 0.5, "chain_interval": 0.8, "chain_range": 170.0,
-	"det_chance": 0.0, "det_power": 0.8, "det_radius": 1.5,
+	"det_chance": 0.0, "det_power": 0.8, "det_radius": 2.0,
 	"escort_count": 0.0, "escort_power": 0.25, "escort_hp": 0.25,
 	"fighter_damage": 1.0, "hull_siphon": 0.0, "salvage": 0.0,
 	"cargo": 30.0, "cargo_mult": 1.0, "yield_mult": 1.0, "deposit_yield_mult": 1.0, "scanner": 0.0, "teleport": 0.0,
 	"max_fuel": 30.0, "fuel_efficiency": 0.0, "fuel_siphon": 0.0, "drift_boost": 160.0,
-	"rocket_unlocked": 0.0, "rocket_cooldown": 10.0, "rocket_radius": 4.0, "rocket_damage": 10.0,
-	"drone_count": 0.0, "drone_damage": 6.0, "drone_interval": 1.5,
-	"gun_unlocked": 0.0, "gun_damage": 8.0, "gun_interval": 0.5, "gun_range": 380.0,
+	"rocket_unlocked": 0.0, "rocket_cooldown": 10.0, "rocket_radius": 3.0, "rocket_damage": 10.0,
+	"drone_count": 0.0, "drone_damage": 5.0, "drone_interval": 1.5,
+	"gun_unlocked": 0.0, "gun_damage": 10.0, "gun_interval": 0.5, "gun_range": 380.0,
 	"armory": 0.0, "bridge": 0.0, "lab": 0.0, "abduct_speed": 1.0, "abduct_range": 220.0, "abduct_amount": 1.0, "abduct_area": 0.5,
 	"rebuild": 0.0, "rebuild_area": 0.5, "rebuild_speed": 1.0, "rebuild_range": 260.0, "power_mult": 1.0,
 	"bio_capacity": 5.0, "research_speed": 1.0,
 	"imp_spread": 0.0, "imp_spread_cd": 10.0,
 	"ally_turret_chance": 0.2, "ally_damage": 10.0, "ally_range": 380.0,
-	"miner_count": 0.0, "miner_dps": 22.0, "miner_yield": 1.0, "miner_speed": 240.0,
-	"wing_count": 0.0, "wing_damage": 10.0, "wing_interval": 0.55, "wing_speed": 760.0, "wing_hp": 60.0, "miner_hp": 80.0, "miner_scan": 0.0, "mother_hp": 1500.0,
+	"miner_count": 0.0, "miner_dps": 20.0, "miner_yield": 1.0, "miner_speed": 240.0,
+	"wing_count": 0.0, "wing_damage": 15.0, "wing_interval": 0.6, "wing_speed": 760.0, "wing_hp": 60.0, "miner_hp": 80.0, "miner_scan": 0.0, "mother_hp": 1500.0,
 	"transit_count": 0.0, "transit_interval": 45.0, "transit_share": 0.35, "transit_hp": 120.0, "transit_speed": 900.0,
 }
 
@@ -360,27 +373,54 @@ func recalc_stats() -> void:
 		var lv: int = get_level(u["id"])
 		if lv <= 0:
 			continue
-		var m := mastery_mult(u, lv)
 		for k in u["effects"]:
-			var add := float(u["effects"][k]) * lv * m
-			# drony, przeskoki czy istoty liczy się w sztukach: bonus Mistrzostwa zaokrąglamy
-			if k in INT_STATS:
-				add = round(add)
-			stats[k] = float(stats.get(k, 0.0)) + add
+			stats[k] = float(stats.get(k, 0.0)) + contribution(u, k, lv)
+	# zaokrąglenie do kroku usuwa ślady arytmetyki zmiennoprzecinkowej (0.1 + 0.2 ...)
+	for k in stats:
+		stats[k] = snappedf(float(stats[k]), 0.001)
 	stats_changed.emit()
 
 
-## Mistrzostwo: węzeł wykupiony do końca (z kilku poziomów) daje swój efekt x1.25.
-func mastery_mult(u: Dictionary, lv: int) -> float:
-	var mx := int(u["max"])
-	return 1.0 + Upgrades.MASTERY_BONUS if mx > 1 and lv >= mx and not u.get("no_mastery", false) else 1.0
+## Krok "ładnej" wartości statystyki. Bazy i przyrosty na poziom są jego wielokrotnościami,
+## a premia Mistrzostwa jest do niego zaokrąglana - dzięki temu po każdym zakupie liczby są okrągłe.
+func stat_step(key: String) -> float:
+	if STAT_STEPS.has(key):
+		return STAT_STEPS[key]
+	if key in PERCENT_STATS:
+		return 0.05
+	return 1.0
+
+
+func has_mastery(u: Dictionary) -> bool:
+	return int(u["max"]) > 1 and not u.get("no_mastery", false)
+
+
+## Mistrzostwo: węzeł wykupiony do końca daje dodatkowo ok. 25% swojego pełnego efektu,
+## zaokrąglone do kroku statystyki (co najmniej jeden krok).
+func mastery_extra(u: Dictionary, key: String) -> float:
+	var full := float(u["effects"].get(key, 0.0)) * int(u["max"])
+	var step := stat_step(key)
+	# drobny naddatek: 0.075 / 0.05 w liczbach zmiennoprzecinkowych bywa 1.4999..., a ma dać 2 kroki
+	var extra := snappedf(full * Upgrades.MASTERY_BONUS + signf(full) * step * 0.0001, step)
+	if absf(extra) < step:
+		extra = step * signf(full)
+	return extra
+
+
+## Wkład węzła na danym poziomie w statystykę (z Mistrzostwem na ostatnim poziomie).
+func contribution(u: Dictionary, key: String, lv: int) -> float:
+	if lv <= 0:
+		return 0.0
+	var add := float(u["effects"].get(key, 0.0)) * lv
+	if has_mastery(u) and lv >= int(u["max"]):
+		add += mastery_extra(u, key)
+	return add
 
 
 ## O ile wzrośnie statystyka po kupnie kolejnego poziomu (z Mistrzostwem przy ostatnim).
 func gain(u: Dictionary, key: String) -> float:
 	var lv := get_level(u["id"])
-	var e := float(u["effects"].get(key, 0.0))
-	return e * (lv + 1) * mastery_mult(u, lv + 1) - e * lv * mastery_mult(u, lv)
+	return contribution(u, key, lv + 1) - contribution(u, key, lv)
 
 
 # ---------------- Ładownia ----------------
@@ -393,8 +433,9 @@ func cargo_total() -> int:
 
 
 ## Pojemność ładowni: suma ulepszeń x mnożnik (Mikrokompresja).
+## Pojemność ładowni po mnożnikach, zaokrąglona do pełnych dziesiątek.
 func cargo_cap() -> int:
-	return int(stat("cargo") * stat("cargo_mult"))
+	return int(round(stat("cargo") * stat("cargo_mult") / 10.0)) * 10
 
 
 func cargo_free() -> int:
@@ -847,6 +888,10 @@ func load_game() -> bool:
 	var l: Dictionary = data.get("levels", {})
 	for k in l:
 		levels[k] = int(l[k])
+		# po zmianie balansu węzeł mógł dostać mniej poziomów: nadmiar przepada
+		var u: Dictionary = Upgrades.by_id(k)
+		if not u.is_empty():
+			levels[k] = mini(levels[k], int(u["max"]))
 	levels["core"] = 1
 	sorties = int(data.get("sorties", 0))
 	tiles_destroyed = int(data.get("tiles_destroyed", 0))
